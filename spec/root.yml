@@ -1,0 +1,727 @@
+openapi: 3.0.1
+x-service-type: 4
+x-events: 'resume-business.transferAllCandidatesDatas,resume-business.putResumeAfterCreateCandidate, resume-business.transferHHAreaResumes'
+info:
+  title: resume-business
+  description: HR resume service
+  version: 1.0.0
+tags:
+  - name: Resume
+    description: Резюме
+  - name: Vacancies
+    description: Публикации
+  - name: Responses
+    description: Отклики
+  - name: Auth
+    description: Авторизация
+  - name: Dictionaries
+    description: Справочники
+  - name: Key Skills
+    description: Ключевые навыки
+  - name: Extension
+    description: Плагин
+  - name: Schema
+    description: Схема данных
+servers:
+  - url: https://resume-business.esoft.team/
+    description: Address for requests from host to kuber
+  - url: http://resume-business:{port}/
+    description: Dev internal k8s address
+    x-env: development
+    variables:
+      port:
+        enum:
+          - '10000'
+        default: '10000'
+  - url: http://resume-business:{port}/
+    description: Prod internal k8s address
+    x-env: production
+    variables:
+      port:
+        enum:
+          - '10000'
+        default: '10000'
+paths:
+  /platform/{platform}/resume/list:
+    post:
+      tags:
+        - Resume
+      summary: Поиск резюме
+      x-router-controller: resumeController
+      operationId: getResumeList
+      parameters:
+        - $ref: './parameters.yml#/PathPlatform'
+          required: true
+      requestBody:
+        $ref: './requestBodies.yml#/GetResumeList'
+        required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetResumeList'
+
+  /platform/{platform}/resume/{resumeId}:
+    get:
+      tags:
+        - Resume
+      summary: Получение резюме по id
+      x-router-controller: resumeController
+      operationId: getResume
+      parameters:
+        - $ref: './parameters.yml#/PathPlatform'
+          required: true
+        - $ref: './parameters.yml#/PathResumeId'
+          required: true
+        - $ref: './parameters.yml#/QueryWithContacts'
+        - $ref: './parameters.yml#/QueryWithPersist'
+        - $ref: './parameters.yml#/QueryResponseId'
+      responses:
+        200:
+          $ref: './responses.yml#/GetResume'
+
+  /platform/{platform}/resume/{resumeId}/candidate:
+    patch:
+      tags:
+        - Resume
+      summary: Создание связи между резюме с HH и кандидатом из CRM HR
+      x-router-controller: resumeController
+      operationId: connectResumeCandidate
+      parameters:
+        - $ref: './parameters.yml#/PathPlatform'
+          required: true
+        - $ref: './parameters.yml#/PathResumeId'
+          required: true
+      requestBody:
+        required: true
+        $ref: './requestBodies.yml#/ConnectResumeCandidate'
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /resume/list/candidate/{candidateId}:
+    patch:
+      tags:
+        - Resume
+      summary: Получение списка резюме по id кандидата
+      x-router-controller: resumeController
+      operationId: getResumeListByCandidateId
+      parameters:
+        - $ref: './parameters.yml#/PathCandidateId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetResumeListByCandidateId'
+
+  /resume/comments:
+    get:
+      tags:
+        - Resume
+      summary: Получение списка комментариев к резюме соискателя
+      x-router-controller: resumeController
+      operationId: getResumeComments
+      parameters:
+        - $ref: './parameters.yml#/OwnerId'
+          required: true
+        - $ref: './parameters.yml#/Page'
+        - $ref: './parameters.yml#/PerPage'
+      responses:
+        200:
+          $ref: './responses.yml#/GetResumeComments'
+
+  /auth/hh/code:
+    get:
+      tags:
+        - Auth
+      summary: Получение access token HH по authorization code
+      x-router-controller: authController
+      operationId: handleCodeHH
+      parameters:
+        - $ref: './parameters.yml#/AuthState'
+          required: true
+        - $ref: './parameters.yml#/AuthCode'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /auth/hh/url:
+    get:
+      tags:
+        - Auth
+      summary: Получение ссылки для авторизации в HH
+      x-router-controller: authController
+      operationId: getAuthUrlHH
+      responses:
+        200:
+          $ref: './responses.yml#/GetAuthParamsHH'
+
+  /auth/hh/token:
+    post:
+      tags:
+        - Auth
+      summary: Инвалидация текущего access-токена
+      x-router-controller: authController
+      operationId: invalidateHHAccessToken
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /auth/hh/user:
+    get:
+      tags:
+        - Auth
+      summary: Получение данных о текущем пользователе
+      x-router-controller: authController
+      operationId: getCurrentUser
+      responses:
+        200:
+          $ref: './responses.yml#/GetCurrentUser'
+
+  /hh/dictionaries:
+    get:
+      tags:
+        - Dictionaries
+      summary: Получить справочники НН
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      x-router-controller: dictionaries
+      operationId: getHHDictionaries
+      parameters:
+        - $ref: './parameters.yml#/HHDictionaries'
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHDictionaries'
+
+  /hh/areas/{areaId}:
+    get:
+      tags:
+        - Dictionaries
+      summary: Справичник регионов HH
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/areas.md)
+      x-router-controller: dictionaries
+      operationId: getHHAreas
+      parameters:
+        - $ref: './parameters.yml#/HHAreaIdPath'
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHAreas'
+
+  /hh/languages:
+    get:
+      tags:
+        - Dictionaries
+      summary: Справочник языков HH
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/languages.md)
+      x-router-controller: dictionaries
+      operationId: getHHLanguages
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHLanguages'
+
+  /hh/professionalRoles:
+    get:
+      tags:
+        - Dictionaries
+      summary: Справочник профессиональных ролей
+      description: Описание [тут](https://api.hh.ru/openapi/redoc#tag/Spravochniki/paths/~1professional_roles/get)
+      x-router-controller: dictionaries
+      operationId: getHHProfessionalRoles
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHProfessionalRoles'
+
+  /hh/suggests/{suggest}:
+    get:
+      tags:
+        - Dictionaries
+      summary: Подсказки
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/suggests.md#key-skills)
+      x-router-controller: dictionaries
+      operationId: getHHSuggestions
+      parameters:
+        - $ref: './parameters.yml#/HHSuggestionTypes'
+          required: true
+        - $ref: './parameters.yml#/PathHHSuggestionText'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHSuggestions'
+
+  /hh/addresses:
+    get:
+      tags:
+        - Dictionaries
+      summary: Справочник адресов работодателя
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_addresses.md)
+      x-router-controller: dictionaries
+      operationId: getHHEmployersAddresses
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHEmployersAddresses'
+
+  /hh/managers:
+    get:
+      tags:
+        - Dictionaries
+      summary: Список менеджеров работодателя
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_managers.md#list)
+      x-router-controller: dictionaries
+      operationId: getHHManagers
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHManagers'
+
+  /hh/publicationTypes:
+    get:
+      tags:
+        - Dictionaries
+      summary: Возможные варианты публикации вакансий у текущего менеджера
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_vacancies.md#available_types)
+      x-router-controller: dictionaries
+      operationId: getHHPublicationTypes
+      responses:
+        200:
+          $ref: './responses.yml#/GetHHPublicationTypes'
+
+  /hh/vacancy/brand:
+    get:
+      tags:
+        - Dictionaries
+      summary: Список доступных шаблонов работодателя
+      description: Описание [тут](https://api.hh.ru/openapi/redoc#tag/Informaciya-o-rabotodatele/paths/~1employers~1%7Bemployer_id%7D~1vacancy_branded_templates/get)
+      x-router-controller: dictionaries
+      operationId: getBrandedTemplates
+      responses:
+        200:
+          $ref: './responses.yml#/GetBrandedTemplates'
+
+  /hh/manager/limit/resume:
+    get:
+      tags:
+        - Dictionaries
+      summary: Дневной лимит просмотра резюме для текущего менеджера
+      description: Описание [тут](https://api.hh.ru/openapi/redoc#tag/Menedzhery-rabotodatelya/paths/~1employers~1%7Bemployer_id%7D~1managers~1%7Bmanager_id%7D~1limits~1resume/get)
+      x-router-controller: dictionaries
+      operationId: getResumeDayLimit
+      responses:
+        200:
+          $ref: './responses.yml#/GetResumeDayLimit'
+
+  /hh/skills:
+    get:
+      tags:
+        - Dictionaries
+      summary: Метод возвращает информацию по запрашиваемым ключевым навыкам
+      description: Описание [тут](https://github.com/hhru/api/blob/69cdfd2172196313f876d5d9ab9490348e97d606/docs/key_skills.md)
+      x-router-controller: dictionaries
+      operationId: getSkillsByIds
+      parameters:
+        - $ref: './parameters.yml#/SkillsIds'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetSkillsByIds'
+
+
+  /platform/hh/vacancy:
+    post:
+      tags:
+        - Vacancies
+      summary: Публикация вакансии
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_vacancies.md#creation)
+      x-router-controller: vacancyController
+      operationId: postVacancy
+      requestBody:
+        required: true
+        $ref: './requestBodies.yml#/PostVacancy'
+      responses:
+        200:
+          $ref: './responses.yml#/PostVacancy'
+
+  /platform/hh/vacancy/{vacancyId}/archive:
+    patch:
+      tags:
+        - Vacancies
+      summary: Архивация вакансии
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_vacancies.md#archive)
+      x-router-controller: vacancyController
+      operationId: archiveVacancy
+      parameters:
+        - $ref: './parameters.yml#/PathVacancyId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /platform/hh/vacancy/{vacancyId}/authorId/{authorId}:
+    get:
+      tags:
+        - Vacancies
+      summary: Просмотр вакансии
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/vacancies.md#item)
+      x-router-controller: vacancyController
+      operationId: getVacancy
+      parameters:
+        - $ref: './parameters.yml#/PathVacancyId'
+          required: true
+        - $ref: './parameters.yml#/PathAuthorId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetVacancy'
+
+  /platform/hh/vacancy/{vacancyId}/authorId/{authorId}/collection/{collectionType}/list:
+    get:
+      tags:
+        - Responses
+      summary: Получение коллекции из откликов/приглашений
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_negotiations.md#negotiations-list)
+      x-router-controller: responseController
+      operationId: getCollection
+      parameters:
+        - $ref: './parameters.yml#/PathCollectionType'
+          required: true
+        - $ref: './parameters.yml#/PathVacancyId'
+          required: true
+        - $ref: './parameters.yml#/PathAuthorId'
+          required: true
+        - $ref: './parameters.yml#/Page'
+        - $ref: './parameters.yml#/PerPage'
+      responses:
+        200:
+          $ref: './responses.yml#/GetCollection'
+
+  /platform/hh/vacancy/{vacancyId}/authorId/{authorId}/response/list:
+    get:
+      tags:
+        - Responses
+      summary: Получение списка откликов
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/negotiations.md#get_negotiations)
+      x-router-controller: responseController
+      operationId: getResponseList
+      parameters:
+        - $ref: './parameters.yml#/PathVacancyId'
+          required: true
+        - $ref: './parameters.yml#/PathAuthorId'
+          required: true
+        - $ref: './parameters.yml#/Page'
+        - $ref: './parameters.yml#/PerPage'
+      responses:
+        200:
+          $ref: './responses.yml#/GetResponseList'
+
+  /platform/hh/response/{responseId}:
+    get:
+      tags:
+        - Responses
+      summary: Получение и просмотр отклика
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_negotiations.md#get-negotiation)
+      x-router-controller: responseController
+      operationId: getResponse
+      parameters:
+        - $ref: './parameters.yml#/PathResponseId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetResponse'
+
+  /platform/hh/response/{responseId}/invite:
+    put:
+      tags:
+        - Responses
+      summary: Приглашение на интервью
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_negotiations.md#add-invite)
+      x-router-controller: responseController
+      operationId: sendInvite
+      parameters:
+        - $ref: './parameters.yml#/PathResponseId'
+          required: true
+        - $ref: './parameters.yml#/Message'
+        - $ref: './parameters.yml#/Sms'
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /platform/hh/response/{responseId}/discard:
+    put:
+      tags:
+        - Responses
+      summary: Отказ соискателю
+      description: Описание [тут](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/employer_negotiations.md#actions)
+      x-router-controller: responseController
+      operationId: discardCandidate
+      parameters:
+        - $ref: './parameters.yml#/PathResponseId'
+          required: true
+        - $ref: './parameters.yml#/Message'
+        - $ref: './parameters.yml#/Sms'
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /platform/hh/response/{responseId}/templates:
+    get:
+      tags:
+        - Responses
+      summary: Шаблоны для использования в действиях по откликам/приглашениям.
+      description: Описание [тут](https://github.com/hhru/api/blob/24a43b9d797bcd0ea08e6dcf929d54a562458e89/docs/negotiation_message_templates.md)
+      x-router-controller: responseController
+      operationId: getTemplates
+      parameters:
+        - $ref: './parameters.yml#/PathResponseId'
+          required: true
+        - $ref: './parameters.yml#/TemplatesType'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetTemplates'
+
+  /platform/hh/resume/{resumeId}/vacancy/{vacancyId}/invite:
+    post:
+      tags:
+        - Responses
+      summary: Приглашение соискателя на вакансию
+      description: Описание [тут](https://github.com/hhru/api/blob/master/docs/employer_negotiations.md#add-invite)
+      x-router-controller: responseController
+      operationId: sendInviteForVacancy
+      parameters:
+        - $ref: './parameters.yml#/Status'
+        - $ref: './parameters.yml#/PathResumeId'
+          required: true
+        - $ref: './parameters.yml#/PathVacancyId'
+          required: true
+        - $ref: './parameters.yml#/Message'
+        - $ref: './parameters.yml#/AddressId'
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /resume:
+    post:
+      tags:
+        - Resume
+      summary: Добавление нового резюме в базу
+      x-router-controller: resumeController
+      operationId: putResume
+      requestBody:
+        required: true
+        $ref: './requestBodies.yml#/Resume'
+      responses:
+        200:
+          $ref: './responses.yml#/ResumeId'
+
+  /resume/{resumeId}/platform/{platform}:
+    delete:
+      tags:
+          - Resume
+      summary: Удаление резюме из базы
+      x-router-controller: resumeController
+      operationId: removeResume
+      parameters:
+        - $ref: './parameters.yml#/PathPlatform'
+          required: true
+        - $ref: './parameters.yml#/PathResumeId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /keySkills/add:
+    post:
+      tags:
+        - Key Skills
+      summary: Добавление ключевого навыка в базу
+      x-router-controller: keySkillsController
+      operationId: addKeySkill
+      parameters:
+        - $ref: './parameters.yml#/KeySkillName'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/KeySkill'
+
+  /keySkills/{id}:
+    delete:
+      tags:
+        - Key Skills
+      summary: Удаление ключевого навыка из базы
+      x-router-controller: keySkillsController
+      operationId: removeKeySkill
+      parameters:
+        - $ref: './parameters.yml#/KeySkillId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /keySkills/list:
+    post:
+      tags:
+        - Key Skills
+      summary: Поиск ключевых навыков в базе
+      x-router-controller: keySkillsController
+      operationId: searchKeySkills
+      requestBody:
+        required: true
+        $ref: './requestBodies.yml#/KeySkillsFilter'
+      responses:
+        200:
+          $ref: './responses.yml#/KeySkills'
+
+  /extension/content:
+    post:
+      tags:
+        - Extension
+      summary: Добавление/обновление полученного с площадки контента
+      x-router-controller: extensionController
+      operationId: addJobPageContent
+      parameters:
+        - $ref: './parameters.yml#/ContentId'
+        - $ref: './parameters.yml#/PageUrl'
+          required: true
+        - $ref: './parameters.yml#/Platform'
+          required: true
+      requestBody:
+        $ref: './requestBodies.yml#/PageContentBody'
+        required: true
+      responses:
+        200:
+          $ref: './responses.yml#/AddJobPageContent'
+
+  /extension/content/{id}:
+    get:
+      tags:
+        - Extension
+      summary: Получение HTML-контента со страницы job-площадки
+      x-router-controller: extensionController
+      operationId: getJobPageContent
+      parameters:
+        - $ref: './parameters.yml#/PathContentId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetJobPageContent'
+
+  /extension/check:
+    get:
+      tags:
+        - Extension
+      summary: Проверить существование в базе дублей контента и резюме добавляемого контента
+      x-router-controller: extensionController
+      operationId: checkDoubleByUrl
+      parameters:
+        - $ref: './parameters.yml#/PageUrl'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/CheckDoubleByUrl'
+
+  /extension/resume/{resumeId}/content/{id}:
+    patch:
+      tags:
+        - Extension
+      summary: Создание связи между резюме созданным через расширение и извлеченными данными
+      x-router-controller: extensionController
+      operationId: connectResumeContent
+      parameters:
+        - $ref: './parameters.yml#/PathResumeId'
+          required: true
+        - $ref: './parameters.yml#/PathContentId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /resume/list:
+    post:
+      tags:
+        - Resume
+      summary: Поиск резюме во внутренней базе
+      x-router-controller: resumeController
+      operationId: getInternalBaseResumeList
+      requestBody:
+        $ref: './requestBodies.yml#/GetInternalResumeList'
+        required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetInternalResumeList'
+
+  /schema/add:
+    post:
+      tags:
+        - Schema
+      summary: Добавление схемы данных для парсинга HTML-контента
+      x-router-controller: schemaController
+      operationId: addSchema
+      parameters:
+        - $ref: './parameters.yml#/SchemaIdQuery'
+        - $ref: './parameters.yml#/SchemaTitle'
+          required: true
+        - $ref: './parameters.yml#/Platform'
+          required: true
+      requestBody:
+        $ref: './requestBodies.yml#/SchemaRequestBody'
+        required: true
+      responses:
+        200:
+          $ref: './responses.yml#/SchemaId'
+
+  /schema/list:
+    get:
+      tags:
+        - Schema
+      summary: Получение списка схем данных для парсинга HTML-контента
+      x-router-controller: schemaController
+      operationId: getSchemaList
+      parameters:
+        - $ref: './parameters.yml#/Platform'
+      responses:
+        200:
+          $ref: './responses.yml#/GetSchemaListResponse'
+
+  /schema/{id}:
+    get:
+      tags:
+        - Schema
+      summary: Получение схемы данных для парсинга HTML-контента по адресной строке платформы
+      x-router-controller: schemaController
+      operationId: getSchema
+      parameters:
+        - $ref: './parameters.yml#/SchemaId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetSchemaResponse'
+
+    delete:
+      tags:
+        - Schema
+      summary: Удаление схемы данных для парсинга HTML-контента
+      x-router-controller: schemaController
+      operationId: removeSchema
+      parameters:
+        - $ref: './parameters.yml#/SchemaId'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/Empty'
+
+  /extension/url:
+    get:
+      tags:
+        - Extension
+      summary: Получение enum-a платформы по url-у
+      x-router-controller: extensionController
+      operationId: getPlatformByUrl
+      parameters:
+        - $ref: './parameters.yml#/PageUrl'
+          required: true
+      responses:
+        200:
+          $ref: './responses.yml#/GetPlatformByUrl'
+
+components:
+  schemas:
+    $ref: './schemas.yml'
+  responses:
+    $ref: './responses.yml'
+  requestBodies:
+    $ref: './requestBodies.yml'

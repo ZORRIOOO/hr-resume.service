@@ -1,0 +1,340 @@
+PathPlatform:
+  name: platform
+  in: path
+  description: Тип платформы
+  schema:
+    $ref: './schemas.yml#/VacancyPlaceEnum'
+
+PathResumeId:
+  name: resumeId
+  in: path
+  description: Id резюме
+  schema:
+    $ref: './schemas.yml#/PlatformResumeId'
+
+AuthState:
+  name: state
+  in: query
+  description: State указанный при предоставлени доступа приложению
+  schema:
+    $ref: './schemas.yml#/AuthState'
+
+AuthCode:
+  name: code
+  in: query
+  description: Authorization code
+  schema:
+    $ref: './schemas.yml#/AuthCode'
+
+QueryWithContacts:
+  name: withContacts
+  in: query
+  description: Показать резюме с контактами. Происходит трата услуги
+  schema:
+    $ref: 'shared://Boolean'
+    default: false
+    description: boolean
+  example: false
+
+QueryWithPersist:
+  name: withPersist
+  in: query
+  description: Сохранить полученное резюме в локальное хранилище
+  schema:
+    $ref: 'shared://Boolean'
+    default: false
+    description: boolean
+  example: false
+
+HHDictionaries:
+  name: dictionaries
+  in: query
+  description: Массив названий справочников. Если не передать, то придут все.
+  schema:
+    type: array
+    description: array
+    items:
+      $ref: 'shared://NotEmptyString'
+      enum:
+        - vacancy_label
+        - resume_access_type
+        - vacancy_search_order
+        - vacancy_search_fields
+        - vacancy_type
+        - gender
+        - preferred_contact_type
+        - travel_time
+        - relocation_type
+        - business_trip_readiness
+        - resume_contacts_site_type
+        - employer_type
+        - employer_relation
+        - negotiations_state
+        - applicant_negotiation_status
+        - negotiations_participant_type
+        - negotiations_order
+        - resume_moderation_note
+        - vacancy_relation
+        - resume_status
+        - resume_search_logic
+        - resume_search_fields
+        - messaging_status
+        - employer_active_vacancies_order
+        - employer_archived_vacancies_order
+        - employer_hidden_vacancies_order
+        - applicant_comments_order
+        - vacancy_not_prolonged_reason
+        - vacancy_site
+        - resume_hidden_fields
+        - experience
+        - employment
+        - schedule
+        - education_level
+        - currency
+        - vacancy_billing_type
+        - applicant_comment_access_type
+        - vacancy_cluster
+        - driver_license_types
+        - language_level
+        - working_days
+        - working_time_intervals
+        - working_time_modes
+        - resume_search_label
+        - resume_search_relocation
+        - resume_search_order
+        - resume_search_experience_period
+
+HHAreaIdPath:
+  name: areaId
+  in: path
+  description: Id родительского региона
+  schema:
+    oneOf:
+      - $ref: 'shared://PositiveInteger'
+        description: Integer
+      - $ref: 'shared://NotEmptyString'
+        enum:
+          - countries
+  example: 113
+
+HHSuggestionTypes:
+  name: suggest
+  in: query
+  description: Название подсказки.
+  schema:
+    description: Текстовое значение
+    $ref: 'shared://NotEmptyString'
+
+
+PathHHSuggestionText:
+  name: text
+  in: query
+  description: Текстовое значение для поиска
+  schema:
+    description: Текстовое значение
+    $ref: 'shared://NotEmptyString'
+
+ResumeId:
+  name: resumeId
+  in: query
+  description: Id резюме
+  schema:
+    description: Текстовое значение
+    $ref: 'shared://NotEmptyString'
+
+PathCandidateId:
+  name: candidateId
+  in: path
+  description: Id кандидата
+  schema:
+    $ref: './schemas.yml#/CandidateId'
+
+OwnerId:
+  name: ownerId
+  in: query
+  description: Id соискателя
+  schema:
+    description: Уникальный идентификатор
+    $ref: 'shared://NotEmptyString'
+
+PathVacancyId:
+  name: vacancyId
+  in: path
+  description: Id вакансии
+  schema:
+    $ref: './schemas.yml#/VacancyId'
+
+PathAuthorId:
+  name: authorId
+  in: path
+  description: Id автора
+  schema:
+    $ref: './schemas.yml#/AuthorId'
+
+PathResponseId:
+  name: responseId
+  in: path
+  description: Id отклика
+  schema:
+    $ref: './schemas.yml#/ResponseId'
+
+TemplatesType:
+  name: templatesType
+  in: query
+  description: Действие по откликам/приглашениям, для которого нужны шаблоны
+  schema:
+    description: Текст шаблона
+    $ref: 'shared://NotEmptyString'
+
+Templates:
+  name: templates
+  in: query
+  description: Шаблоны для отправляемых сооискателю приглашений
+  schema:
+    $ref: './schemas.yml#/Templates'
+
+Message:
+  name: message
+  in: query
+  description: Текст сообщения для отклика/приглашения
+  schema:
+    $ref: './schemas.yml#/Message'
+
+Sms:
+  name: sms
+  in: query
+  description: Текст сообщения для отклика/приглашения
+  schema:
+    $ref: './schemas.yml#/Sms'
+
+QueryResponseId:
+  name: responseId
+  in: query
+  description: Запросить резюме через отклик для того, чтобы он считался просмотренным
+  schema:
+    $ref: './schemas.yml#/ResponseId'
+    description: String
+  example: 123456789
+
+Page:
+  name: page
+  in: query
+  schema:
+    description: Номер страницы
+    $ref: 'shared://PositiveInteger'
+    default: 0
+    example: 0
+
+PerPage:
+  name: perPage
+  in: query
+  schema:
+    description: Количество записей на странице
+    $ref: 'shared://Limit'
+    maximum: 20
+    default: 20
+    example: 20
+
+Status:
+  name: status
+  in: query
+  description: Тип действия
+  schema:
+    $ref: './schemas.yml#/InviteStatus'
+
+PathCollectionType:
+  name: collectionType
+  in: path
+  description: Коллекция
+  schema:
+    $ref: './schemas.yml#/CollectionType'
+
+AddressId:
+  name: addressId
+  in: query
+  description: Адрес для приглашения
+  schema:
+    $ref: './schemas.yml#/AddressId'
+
+KeySkillName:
+  name: name
+  in: query
+  required: true
+  description: Имя ключевого навыка
+  schema:
+    $ref: 'shared://String'
+    description: Имя ключевого навыка
+
+KeySkillId:
+  name: id
+  in: path
+  required: true
+  description: id ключевого навыка
+  schema:
+    $ref: 'shared://PositiveInteger'
+    description: id ключевого навыка
+
+PathContentId:
+  name: id
+  in: path
+  description: id добавленного контента с job-площадки, встраиваемый в путь запроса
+  schema:
+    $ref: 'shared://PositiveInteger'
+    description: id контента
+
+ContentId:
+  name: id
+  in: query
+  description: id добавленного контента с job-площадки
+  schema:
+    $ref: 'shared://PositiveInteger'
+    description: id контента
+
+PageUrl:
+  name: url
+  in: query
+  description: Ссылка на страницу с резюме
+  schema:
+    $ref: 'shared://Url'
+    description: Ссылка
+
+SchemaId:
+  name: id
+  in: path
+  description: Id схемы данных
+  schema:
+    description: Положительное число
+    $ref: 'shared://PositiveInteger'
+
+SchemaIdQuery:
+  name: id
+  in: query
+  description: Id схемы данных
+  schema:
+    description: Положительное число
+    $ref: 'shared://PositiveInteger'
+
+SchemaTitle:
+  name: title
+  in: query
+  description: Название схемы данных
+  schema:
+    description: Строка
+    $ref: 'shared://String'
+
+Platform:
+  name: platform
+  in: query
+  description: Id площадки
+  schema:
+    description: Enum-ы с типом job-площадки
+    $ref: './schemas.yml#/VacancyPlaceEnum'
+
+SkillsIds:
+  name: ids
+  in: query
+  description: Ids ключевых навыков
+  schema:
+    description: Массив положительных чисел
+    $ref: 'shared://ArrayOfPositiveInteger'
+  example: [1, 2, 3]

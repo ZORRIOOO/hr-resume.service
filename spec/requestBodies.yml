@@ -1,0 +1,73 @@
+GetResumeList:
+  x-name: filter
+  description: Фильтр специфичный для конкретной платформы
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHFilter'
+
+ConnectResumeCandidate:
+  x-name: extraParameters
+  description: Дополнительные параметры
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/parametersConnection'
+
+PostVacancy:
+  x-name: body
+  description: Тело запроса
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHVacancyBody'
+
+Resume:
+  x-name: body
+  description: Тело запроса
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/Resume'
+
+ResumeParams:
+  x-name: body
+  description: Тело запроса
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/ResumeParams'
+
+KeySkillsFilter:
+  x-name: params
+  description: Параметры запроcа для поиска ключевых навыков
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/KeySkillsFilter'
+
+PageContentBody:
+  x-name: pageContent
+  description: Тело запроса
+  content:
+    application/json:
+      schema:
+        description: JSON-объект
+        $ref: 'shared://SimpleObject'
+
+SchemaRequestBody:
+  x-name: schema
+  description: Схема данных для парсинга HTML-контента
+  content:
+    application/json:
+      schema:
+        description: Схема
+        $ref: './schemas.yml#/ParsedSchema'
+
+GetInternalResumeList:
+  x-name: filter
+  description: Фильтр резюме для внутренней базы
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/InternalFilter'

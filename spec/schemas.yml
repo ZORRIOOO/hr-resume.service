@@ -1,0 +1,3172 @@
+GetResumeListResponse:
+  type: object
+  description: Список резюме с общим количеством
+  properties:
+    list:
+      type: array
+      description: Список резюме
+      items:
+        $ref: '#/ResumeListItem'
+    count:
+      $ref: 'shared://PositiveInteger'
+      description: Общее количество
+    hasNext:
+      $ref: 'shared://Boolean'
+      description: Пагинация на наличие следующих записей
+  required:
+    - list
+    - count
+  example:
+    list: [ ]
+    count: 0
+    hasNext: false
+
+ResumeId:
+  type: object
+  description: Составной Id резюме
+  nullable: true
+  properties:
+    id:
+      $ref: 'shared://NotEmptyString'
+      description: Id резюме
+    platform:
+      $ref: '#/VacancyPlaceEnum'
+      description: Тип платформы
+  required:
+    - id
+    - platform
+
+CheckDoubleByUrlResponse:
+  description: Дубль ранее полученного ранее контента и резюме
+  nullable: true
+  type: object
+  properties:
+    id:
+      description: Id контента
+      $ref: 'shared://PositiveInteger'
+    resumeId:
+      description: Id резюме
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+
+Salary:
+  type: object
+  description: Заработная плата
+  properties:
+    amount:
+      $ref: 'shared://Float'
+      description: Сумма
+    currency:
+      $ref: 'shared://NotEmptyString'
+      description: Валюта
+  required:
+    - amount
+    - currency
+
+PersistedResume:
+  type: object
+  description: Сохраненное в базе резюме
+  properties:
+    id:
+      $ref: '#/ResumeId'
+      description: Составной Id резюме
+    resumeParams:
+      $ref: 'shared://SimpleObject'
+      description: Параметры резюме, специфичные для конкретной платформы
+    createdAt:
+      $ref: 'shared://DateTime'
+      description: Дата добавления в базе
+    updatedAt:
+      $ref: 'shared://DateTime'
+      description: Дата последнего обновления
+
+VacancyPlaceEnum:
+  $ref: 'enum://hr/vacancyPlaces'
+  description: Тип job платформы
+
+PlatformResumeId:
+  $ref: 'shared://NotEmptyString'
+  description: Id резюме
+
+ExperienceItem:
+  type: object
+  description: Опыт работы
+  properties:
+    company:
+      $ref: 'shared://Text'
+      description: Название компании
+      nullable: true
+    position:
+      $ref: 'shared://Text'
+      description: Название должности
+      nullable: true
+    start:
+      $ref: 'shared://Date'
+      description: Дата началы работы
+      nullable: true
+    end:
+      $ref: 'shared://Date'
+      description: Дата окончания работы
+      nullable: true
+
+Comment:
+  type: object
+  description: Комментарий
+  properties:
+    text:
+      $ref: 'shared://Text'
+      description: Текст комментария
+    author:
+      $ref: 'shared://NotEmptyString'
+      description: Имя автора комментария
+
+ResumeListItem:
+  type: object
+  description: Элемент списка резюме
+  properties:
+    id:
+      $ref: '#/ResumeId'
+      description: Составной Id резюме
+    candidate:
+      description: Данные кандидата
+      type: object
+      properties:
+        fullName:
+          description: Имя кандидата
+          $ref: 'shared://NotEmptyString'
+          nullable: true
+        photo:
+          description: Ссылка на фотографию кандидата
+          $ref: 'shared://Url'
+          nullable: true
+    title:
+      $ref: 'shared://Text'
+      description: Название резюме
+      nullable: true
+    salary:
+      description: Желаемая заработная плата
+      $ref: '#/Salary'
+      nullable: true
+    persistedResume:
+      description: Локальная копия резюме
+      $ref: '#/PersistedResume'
+      nullable: true
+    lastExperience:
+      description: Последнее место работы
+      $ref: '#/ExperienceItem'
+      nullable: true
+    lastComment:
+      description: Последний комментарий
+      $ref: '#/Comment'
+      nullable: true
+    updatedAt:
+      description: Дата обновления
+      $ref: 'shared://DateTime'
+      nullable: true
+
+HHFilter:
+  type: object
+  description: >
+    Фильтр вакансий HH.
+
+    При указании параметров пагинации (`page`, `per_page`) работает ограничение: глубина возвращаемых результатов не может быть больше 2000.
+    Например, возможен запрос `per_page=10&page=199` (выдача с 1991 по 2000 резюме), но запрос с `per_page=10&page=200` вернёт ошибку (выдача с 2001 до 2010 резюме).
+
+    Примеры запросов:
+
+    - `GET /resumes?text=программист` – найдет все резюме, в любом месте которого встречается заданное слово 'программист'.
+
+    - `GET /resumes?text=программист&text=java` – найдет резюме, в любом месте которого встречаются слова 'программист' и 'java'.
+
+    - `GET /resumes?text=программист%20java&text.logic=any&text.field=everywhere&text.period=all_time` – найдет резюме, в любом месте которого встречается любое из слов заданной фразы в параметре text ('программист' или 'java'). При использовании дополнительных полей, они должны быть указаны все.
+
+    - `GET /resumes?text=Headhunter&text.logic=all&text.field=experience&text.period=last_three_years` – найдет все резюме, в опыте работы которых за последние 3 года встречается 'Headhunter'.
+
+    - `GET /resumes?text=менеджер%20проекта&text.logic=all&text.field=experience%2Cskills&text.period=last_year&text=ответственный&text.logic=all&text.field=everywhere&text.period=all_time` – найдет все резюме, в опыте работы за последний год и ключевых навыках которых встречаются слова 'менеджер' и 'проекта', а также слово 'ответственный' в любом месте резюме. Отметим, что дополнительные параметры `text.logic=all&text.field=experience%2Cskills&text.period=last_year` указаны для `text=менеджер%20проекта`, а `text.logic=all&text.field=everywhere&text.period=all_time` для параметра `text=ответственный`.
+  externalDocs:
+    description: Описание апи
+    url: https://github.com/hhru/api/blob/master/docs/resumes_search.md
+  properties:
+    text:
+      description: >
+        Поисковая фраза. Найдет резюме, в которых встречаются все слова заданной фразы.
+        Возможно указание нескольких значений. Каждый дополнительный `text` уточняет поиск.
+        В качестве поисковой фразы можно использовать [язык поисковых запросов](http://hh.ru/article.xml?articleId=1175).
+        Специально для этого поля есть [автодополнение](https://github.com/hhru/api/blob/master/docs/suggests.md#resume-search-keyword).
+        Для тонкой настройки по фразе можно использовать параметры `text.logic`, `text.field`, `text.period`.
+        При использовании дополнительных `text.*` полей, необходимо указывать весь набор (триаду) параметров.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    text.logic:
+      description: >
+        Описывает, как производится поиск. Справочник с возможными значениями:
+        `resume_search_logic` в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+    text.field:
+      description: >
+        Описывает, где должны встречаться слова из поисковой фразы `text`.
+        В параметре `text.field` можно укзать несколько значений через запятую, например – `?text.field=education,keywords`.
+        Справочник с возможными значениями: `resume_search_fields` в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    text.period:
+      description: >
+        Период для поиска в опыте работы. Параметр имеет смысл только для `text.field` равного одному из:
+        `experience`, `experience_company`, `experience_position`, `experience_description`,
+        но указывать его необходимо всегда при указании других `text.*`. В этом случае он может быть пустым.
+      $ref: 'shared://Text'
+    age_from:
+      description: >
+        Возраст соискателя в годах, диапазон от и до.
+        Обратите внимание, по умолчанию в выдачу добавляются так же резюме с неуказанным возрастом,
+        для выдачи резюме только с указанным возрастом используйте специальный
+        [label](https://github.com/hhru/api/blob/master/docs/resumes_search.md#resume_search_label) "only_with_age".
+      $ref: 'shared://PositiveInteger'
+    age_to:
+      description: >
+        Возраст соискателя в годах, диапазон от и до.
+        Обратите внимание, по умолчанию в выдачу добавляются так же резюме с неуказанным возрастом,
+        для выдачи резюме только с указанным возрастом используйте специальный
+        [label](https://github.com/hhru/api/blob/master/docs/resumes_search.md#resume_search_label) "only_with_age".
+      $ref: 'shared://PositiveInteger'
+    area:
+      description: >
+        Регион. Справочник с возможными значениями: [/areas](https://github.com/hhru/api/blob/master/docs/areas.md).
+        Можно указать несколько значений. По умолчанию выбираются резюме, в которых соискатели живут в указанных регионах или готовы в них переехать,
+        поменять это поведение можно указанием поля `relocation`.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    relocation:
+      description: >
+        Готовность к переезду. Справочник с возможными значениями: `resume_search_relocation` в
+        [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        Необходимо указывать вместе с параметром area.
+      $ref: 'shared://NotEmptyString'
+    period:
+      description: >
+        В днях, ищет резюме опубликованные за указанный период. Если не указан, поиск ведется без ограничений по дате публикации.
+      $ref: 'shared://PositiveInteger'
+    date_from:
+      description: >
+        Дата, от которой нужно начать поиск.
+        Значение указывается в формате [ISO 8601](https://github.com/hhru/api/blob/master/docs/general.md#date-format) -
+        `YYYY-MM-DD` или с точность до секунды `YYYY-MM-DDThh:mm:ss±hhmm`. Нельзя передавать вместе с параметром `period`.
+      $ref: 'shared://DateTime'
+    date_to:
+      description: >
+        Дата, до которой нужно искать.
+        Значение указывается в формате [ISO 8601](https://github.com/hhru/api/blob/master/docs/general.md#date-format) -
+        `YYYY-MM-DD` или с точность до секунды `YYYY-MM-DDThh:mm:ss±hhmm`. Можно передавать только в паре с параметром `date_from`.
+        Нельзя передавать вместе с параметром `period`.
+      $ref: 'shared://DateTime'
+    education_level:
+      description: >
+        Уровень образования. Справочник с возможными значениями: `education_level` в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        Если не указан, поиск ведется без ограничений на уровень образования.
+      $ref: 'shared://NotEmptyString'
+    employment:
+      description: >
+        Тип занятости. Справочник с возможными значениями: `employment` в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        Можно указать несколько значений.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    experience:
+      description: >
+        Опыт работы. Справочник с возможными значениями: experience в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    skill:
+      description: >
+        Ключевые навыки. Указывается один или несколько идентификаторов ключевых навыков.
+        Значения можно получить из поля `id` в подсказке по ключевым навыкам.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    gender:
+      description: >
+        Пол. Справочник с возможными значениями: gender в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        По умолчанию вне зависимости от значения параметра будут найдены резюме, в которых пол не указан,
+        убрать такие резюме можно с помощью `label=only_with_gender`.
+      $ref: 'shared://NotEmptyString'
+    label:
+      description: >
+        Дополнительный фильтр. Справочник с возможными значениями: `resume_search_label` в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        Можно указать несколько значений.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    language:
+      description: >
+        Знание языка. Можно указать несколько значений. Задается в формате `language.level`, где:
+        - `language` — значение из справочника [/languages](https://github.com/hhru/api/blob/master/docs/languages.md),
+        - `level` — значение из справочника language_level [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    metro:
+      description: >
+        Линия, либо станция метро. Справочник с возможными значениями: [/metro](https://github.com/hhru/api/blob/master/docs/metro.md).
+      $ref: 'shared://NotEmptyString'
+    currency:
+      description: >
+        Код валюты. Справочник с возможными значениями: currency (ключ code) в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+    salary_from:
+      description: >
+        Диапазон желаемой заработной платы (ЗП), `от` и до. Обратите внимание, по умолчанию в выдачу добавляются так же резюме с неуказанной ЗП,
+        для выдачи резюме только с указанной ЗП используйте специальный [label](https://github.com/hhru/api/blob/master/docs/resumes_search.md#resume_search_label) "only_with_salary"
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    salary_to:
+      description: >
+        Диапазон желаемой заработной платы (ЗП), от и `до`. Обратите внимание, по умолчанию в выдачу добавляются так же резюме с неуказанной ЗП,
+        для выдачи резюме только с указанной ЗП используйте специальный [label](https://github.com/hhru/api/blob/master/docs/resumes_search.md#resume_search_label) "only_with_salary"
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    schedule:
+      description: >
+        График работы. Справочник с возможными значениями: schedule в [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+        Можно указать несколько значений.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    specialization:
+      description: >
+        Профобласть или специализация. Справочник с возможными значениями: [/specializations](https://github.com/hhru/api/blob/master/docs/specializations.md).
+        Можно указать несколько значений. Будет заменен профессиональными ролями (параметр `professional_role`),
+        в настоящее время работает в режиме обратной совместимости.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    order_by:
+      description: >
+        Сортировка списка резюме. Справочник с возможными значениями: `resume_search_order` в
+        [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+    citizenship:
+      description: >
+        Страна желаемого гражданства. Возможные значения можно посмотреть в справочнике стран.
+        Возможно указание нескольких значений.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    work_ticket:
+      description: >
+        Страна, в которой есть разрешение на работу. Возможные значения можно посмотреть в справочнике стран.
+        Возможно указание нескольких значений.
+      type: array
+      items:
+        $ref: 'shared://NotemptyString'
+    educational_institution:
+      description: >
+        Учебные заведения соискателя. В качестве параметров используются подсказки по названиям университетов
+        [/suggests/educational_institutions](https://github.com/hhru/api/blob/master/docs/suggests.md).
+        Возможно указание нескольких значений.
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    search_in_responses:
+      description: >
+        `true`: искать только по резюме, которыми соискатели откликались на вакансии компании текущего пользователя,
+        `false`: искать по всем резюме. Если параметр не указан, по умолчанию используется поиск по всем резюме.
+      $ref: 'shared://Boolean'
+    by_text_prefix:
+      description: >
+        `true`: включает поиск по префиксу. Для каждого параметра `text` будут находиться не только полные совпадения слов,
+        но еще и слова, начинающиеся с `text`. По умолчанию стоит значение `false`.
+      $ref: 'shared://Boolean'
+    driver_license_types:
+      description: >
+        Категории водительских прав. Справочник с возможными значениями: `driver_license_types` в
+        [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+    vacancy_id:
+      description: >
+        Идентификатор вакансии для поиска похожих резюме.
+        Необходимо передавать идентификатор активной или архивной вакансии работодателя.
+      $ref: 'shared://NotEmptyString'
+    per_page:
+      description: >
+        Количество результатов на страницу (не может превышать 50).
+      $ref: 'shared://PositiveInteger'
+      max: 50
+    page:
+      description: >
+        Номер страницы.
+      $ref: 'shared://PositiveInteger'
+    professional_role:
+      description: >
+        Профессиональная роль. Элемент справочника [professional_roles](https://api.hh.ru/openapi/redoc#tag/Spravochniki/paths/~1professional_roles/get).
+        Можно указать несколько значений. Замена специализациям (параметр `specialization`)
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+  example:
+    text:
+      - программист
+      - java
+    per_page: 10
+    page: 0
+    area:
+      - '1342'
+
+AuthState:
+  $ref: 'shared://String'
+  description: State указанный при предоставлени доступа приложению
+
+AuthCode:
+  $ref: 'shared://NotEmptyString'
+  description: Authorization code
+
+HHResume:
+  description: Схема резюме HH [описание](https://github.com/hhru/api/blob/master/docs/resumes.md#resume-fields)
+  type: object
+  properties:
+    id:
+      description: Идентификатор резюме.
+      $ref: 'shared://NotEmptyString'
+    last_name:
+      description: Фамилия.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    first_name:
+      description: Имя.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    middle_name:
+      description: Отчество.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    age:
+      description: Возраст.
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    birth_date:
+      description: День рождения (в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    gender:
+      decsription: Пол. Элемент справочника [gender](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+      nullanble: true
+    area:
+      description: Город проживания. Элемент справочника [areas](https://github.com/hhru/api/blob/master/docs/areas.md).
+      $ref: '#/IdNameUrlObject'
+      nullanble: true
+    metro:
+      description: Ближайшая станция метро. Элемент справочника [metro](https://github.com/hhru/api/blob/master/docs/metro.md).
+      $ref: '#/MetroObject'
+      nullable: true
+    relocation:
+      description: Информация о возможности переезда в другой город.
+      $ref: '#/RelocationObject'
+    business_trip_readiness:
+      description: Готовность к командировкам. Элемент справочника [business_trip_readiness](https://github.com/hhru/api/blob/master/docs/dictionaries.md#business_trip_readiness).
+      $ref: '#/IdNameObject'
+    contact:
+      description: Список контактов соискателя.
+      type: array
+      items:
+        $ref: '#/ContactObject'
+    photo:
+      description: Фотография пользователя.
+      $ref: '#/PhotoObject'
+      nullable: true
+    portfolio:
+      description: Список изображений в портфолио пользователя.
+      type: array
+      items:
+        $ref: '#/PortfolioObject'
+    site:
+      description: Профили в соц. сетях и других сервисах.
+      type: array
+      items:
+        $ref: '#/SiteObject'
+    title:
+      description: Желаемая должность.
+      $ref: 'shared://String'
+      nullable: true
+    specialization:
+      description: Специализации соискателя. Элементы справочника [specializations](https://github.com/hhru/api/blob/master/docs/specializations.md).
+      type: array
+      items:
+        $ref: '#/SpecializationObject'
+    salary:
+      description: Желаемая зарплата.
+      $ref: '#/SalaryObject'
+      nullable: true
+    employments:
+      description: Список подходящих соискателю типов занятостей. Элементы справочника [employment](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+    schedules:
+      description: Список подходящих соискателю графиков работы. Элементы справочника [schedule](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+    education:
+      description: Образование.
+      $ref: '#/EducationObject'
+    language:
+      description: Список языков, которыми владеет соискатель. Элементы справочника [languages](https://github.com/hhru/api/blob/master/docs/languages.md).
+      type: array
+      items:
+        $ref: '#/LanguageObject'
+    experience:
+      description: Опыт работы.
+      type: array
+      items:
+        $ref: '#/ExperienceObject'
+    total_experience:
+      description: Общий опыт работы.
+      $ref: '#/TotalExperienceObject'
+      nullable: true
+    skills:
+      description: Дополнительная информация, описание навыков в свободной форме.
+      $ref: 'shared://Text'
+      nullable: true
+    skill_set:
+      description: Ключевые навыки (список уникальных строк).
+      type: array
+      items:
+        $ref: 'shared://NotEmptyString'
+    citizenship:
+      description: Список гражданств соискателя. Элементы [справочника регионов](https://github.com/hhru/api/blob/master/docs/areas.md).
+      type: array
+      items:
+        $ref: '#/IdNameUrlObject'
+    work_ticket:
+      description: Список регионов, в который соискатель имеет разрешение на работу. Элементы [справочника регионов](https://github.com/hhru/api/blob/master/docs/areas.md).
+      type: array
+      items:
+        $ref: '#/IdNameUrlObject'
+    travel_time:
+      description: Желательное время в пути до работы. Элемент справочника [travel_time](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+    recommendation:
+      description: Список рекомендаций.
+      type: array
+      items:
+        $ref: '#/RecommendationObject'
+    resume_locale:
+      description: Язык, на котором составлено резюме (локаль). Элемент справочника [локали резюме](https://github.com/hhru/api/blob/master/docs/locales.md).
+      $ref: '#/IdNameObject'
+    certificate:
+      description: Список сертификатов соискателя.
+      type: array
+      items:
+        $ref: '#/CertificateObject'
+    alternate_url:
+      description: URL резюме на сайте.
+      $ref: 'shared://Url'
+    created_at:
+      description: Дата и время создания резюме.
+      $ref: 'shared://DateTime'
+    updated_at:
+      description: Дата и время обновления резюме.
+      $ref: 'shared://DateTime'
+    actions:
+      description: Дополнительные действия
+      $ref: '#/ActionsObject'
+    has_vehicle:
+      description: Наличие личного автомобиля у соискателя.
+      $ref: 'shared://Boolean'
+      nullable: true
+    driver_license_types:
+      description: Список категорий водительских прав соискателя.
+      type: array
+      items:
+        $ref: '#/DriverLicenseTypesObject'
+    hidden_fields:
+      description: >
+        [Список скрытых полей](https://github.com/hhru/api/blob/master/docs/resumes.md#hidden-fields). Элемент справочника [resume_hidden_fields](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+    can_view_full_info:
+      description: Наличие права просмотра контактной информации в резюме.
+      $ref: 'shared://Boolean'
+      nullable: true
+    marked:
+      description: Наличие "Яркое резюме"
+      $ref: 'shared://Boolean'
+    professional_roles:
+      description: Массив объектов профролей
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+    job_search_status:
+      description: Статус поиска работы кандидатом
+      nullable: true
+      $ref: '#/IdNameObject'
+
+IdNameObject:
+  description: Объект с именем и идентификатором
+  type: object
+  properties:
+    id:
+      description: Идентификатор поля.
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название поля.
+      $ref: 'shared://NotEmptyString'
+
+IdNameUrlObject:
+  description: Объект с именем, идентификатором и URL
+  type: object
+  properties:
+    id:
+      description: Идентификатор поля.
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название поля.
+      $ref: 'shared://NotEmptyString'
+    url:
+      description: URL получения информации о поле.
+      $ref: 'shared://Url'
+
+MetroObject:
+  description: Объект `metro`
+  type: object
+  properties:
+    id:
+      description: Идентификатор станции.
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название станции.
+      $ref: 'shared://NotEmptyString'
+    lat:
+      description: Широта расположения станции (число с плавающей запятой).
+      $ref: 'shared://Float'
+    lng:
+      description: Долгота расположения станции (число с плавающей запятой).
+      $ref: 'shared://Float'
+    order:
+      description: Порядковый номер станции на линии метро, начиная с 0.
+      $ref: 'shared://PositiveInteger'
+
+RelocationObject:
+  description: Объект `relocation`
+  type: object
+  properties:
+    type:
+      description: Готовность к переезду. Элемент справочника [relocation_type](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+    areas:
+      description: Список городов, в которые возможен переезд. Содержит элементы [справочника регионов](https://github.com/hhru/api/blob/master/docs/areas.md).
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+
+ContactObject:
+  description: Объект `contact`
+  type: object
+  properties:
+    type:
+      decription: Тип контакта. Элемент справочника [preferred_contact_type](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+    value:
+      description: Значение контакта. Для телефона  – [объект](https://github.com/hhru/api/blob/master/docs/resumes.md#value-object), для email — строка.
+      oneOf:
+        - $ref: 'shared://NotEmptyString'
+          nullable: true
+        - $ref: '#/ValueObject'
+      nullable: true
+
+ValueObject:
+  description: Объект `value`
+  type: object
+  properties:
+    country:
+      description: Код страны (при указании телефона).
+      $ref: 'shared://NotEmptyString'
+    city:
+      description: Код города (при указании телефона).
+      $ref: 'shared://NotEmptyString'
+    number:
+      description: Номер (при указании телефона).
+      $ref: 'shared://NotEmptyString'
+    formatted:
+      description: Отформатированный номер телефона (при указании телефона).
+      $ref: 'shared://NotEmptyString'
+
+PhotoObject:
+  description: Объект `photo`
+  type: object
+  properties:
+    id:
+      description: Уникальный идентификатор изображения.
+      $ref: 'shared://NotEmptyString'
+    small:
+      description: URL уменьшенного изображения. Изображение по данному url доступно ограниченное время, после получения ответа. Приложение должно быть готово к тому, что на запрос изображения вернётся `404 Not Found`.
+      $ref: 'shared://Url'
+    medium:
+      description: URL среднего по размеру изображения. Изображение по данному url доступно ограниченное время, после получения ответа. Приложение должно быть готово к тому, что на запрос изображения вернётся `404 Not Found`.
+      $ref: 'shared://Url'
+
+PortfolioObject:
+  description: Объект `portfolio`
+  type: object
+  properties:
+    id:
+      description: Уникальный идентификатор изображения.
+      $ref: 'shared://NotEmptyString'
+    small:
+      description: URL уменьшенного изображения. Изображение по данному url доступно ограниченное время, после получения ответа. Приложение должно быть готово к тому, что на запрос изображения вернётся `404 Not Found`.
+      $ref: 'shared://Url'
+    medium:
+      description: URL среднего по размеру изображения. Изображение по данному url доступно ограниченное время, после получения ответа. Приложение должно быть готово к тому, что на запрос изображения вернётся `404 Not Found`.
+      $ref: 'shared://Url'
+    description:
+      description: Описание изображения в портфолио.
+      $ref: 'shared://String'
+      nullable: true
+
+SiteObject:
+  description: Объект `site`
+  type: object
+  properties:
+    type:
+      description: Тип профиля. Элемент справочника [resume_contacts_site_type](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+    url:
+      description: Ссылка на профиль или идентификатор.
+      $ref: 'shared://String'
+      nullable: true
+
+SpecializationObject:
+  description: Объект `specialization`
+  type: object
+  properties:
+    id:
+      description: Идентификатор специализации.
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название специализации.
+      $ref: 'shared://NotEmptyString'
+    profarea_id:
+      description: Идентификатор профессиональной области, в которую входит специализация.
+      $ref: 'shared://NotEmptyString'
+    profarea_name:
+      description: Название профессиональной области, в которую входит специализация.
+      $ref: 'shared://NotEmptyString'
+    laboring:
+      description: Относится ли специализация к списку рабочих специальностей.
+      $ref: 'shared://Boolean'
+
+SalaryObject:
+  description: Объект `salary`
+  type: object
+  properties:
+    amount:
+      description: Сумма.
+      $ref: 'shared://PositiveInteger'
+    currency:
+      description: Идентификатор [валюты](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+
+EducationObject:
+  description: Объект `education`
+  type: object
+  properties:
+    elementary:
+      description: Среднее образование. Обычно заполняется только при отсутствии высшего образования.
+      type: array
+      items:
+        $ref: '#/ElementaryObject'
+    additional:
+      description: Список куров повышения квалификации.
+      type: array
+      items:
+        $ref: '#/AdditionalEducationObject'
+    attestation:
+      description: Список пройденных тестов или экзаменов.
+      type: array
+      items:
+        $ref: '#/AdditionalEducationObject'
+    primary:
+      description: Список образований выше среднего.
+      type: array
+      $ref: '#/PrimaryEducationObject'
+    level:
+      description: Уровень образования. Элемент справочника [education_level](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+
+ElementaryObject:
+  description: Объект `elementary`
+  type: object
+  properties:
+    year:
+      description: Год окончания.
+      $ref: 'shared://PositiveInteger'
+    name:
+      description: Название учебного заведения.
+      $ref: 'shared://NotEmptyString'
+
+AdditionalEducationObject:
+  description: Объект с полями дополнительного образования
+  type: object
+  properties:
+    organization:
+      description: Организация, проводившая курс / тест.
+      $ref: 'shared://Text'
+    name:
+      description: Название курса / теста.
+      $ref: 'shared://Text'
+    result:
+      description: Специальность / специализация.
+      $ref: 'shared://String'
+      nullable: true
+    year:
+      description: Год окончания / сдачи.
+      $ref: 'shared://PositiveInteger'
+
+PrimaryEducationObject:
+  description: Объект `primary`
+  type: object
+  properties:
+    name:
+      description: Название учебного заведения.
+      $ref: 'shared://NotEmptyString'
+    name_id:
+      description: Идентификатор учебного заведения.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    organization:
+      description: Факультет.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    organization_id:
+      description: Идентификатор факультета.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    result:
+      description: Специальность / специализация.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    result_id:
+      description: Идентификатор специальности / специализации.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    year:
+      description: Год окончания.
+      $ref: 'shared://PositiveInteger'
+
+LanguageObject:
+  description: Объект `language`
+  type: object
+  properties:
+    id:
+      description: Идентификатор языка.
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название языка.
+      $ref: 'shared://NotEmptyString'
+    level:
+      description: Уровень знания языка. Элемент справочника [language_level](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: '#/IdNameObject'
+
+ExperienceObject:
+  description: Объект `experience`
+  type: object
+  properties:
+    company:
+      description: Организация.
+      $ref: 'shared://Text'
+      nullable: true
+    company_id:
+      description: Уникальный идентификатор организации.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    area:
+      description: Регион расположения организации. Элемент [справочника регионов](https://github.com/hhru/api/blob/master/docs/areas.md).
+      $ref: '#/IdNameUrlObject'
+      nullable: true
+    company_url:
+      description: Cайт компании.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    industries:
+      description: Cписок отраслей компании. Элементы [справочника индустрий](https://github.com/hhru/api/blob/master/docs/industries.md).
+      type: array
+      items:
+        $ref: '#/IdNameObject'
+    position:
+      description: Должность.
+      $ref: 'shared://Text'
+      nullable: true
+    start:
+      description: Начало работы (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+    end:
+      description: Окончание работы (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    description:
+      description: Обязанности, функции, достижения.
+      $ref: 'shared://Text'
+      nullable: true
+
+TotalExperienceObject:
+  description: Объект `total_experience`
+  type: object
+  properties:
+    months:
+      description: Целое число, количество месяцев общего опыта работы с округлением до месяца.
+      $ref: 'shared://PositiveInteger'
+
+RecommendationObject:
+  description: Объект `recommendation`
+  type: object
+  properties:
+    name:
+      description: Имя выдавшего рекомендацию.
+      $ref: 'shared://NotEmptyString'
+    position:
+      description: Должность.
+      $ref: 'shared://Text'
+      nullable: true
+    organization:
+      description: Организация.
+      $ref: 'shared://Text'
+
+CertificateObject:
+  description: Объект `certificate`
+  type: object
+  properties:
+    title:
+      description: Название сертификата.
+      $ref: 'shared://Text'
+    achieved_at:
+      description: Дата получения (в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+    type:
+      description: >
+        Тип сертификата. Доступные значения: `custom`, `microsoft`.
+      $ref: 'shared://NotEmptyString'
+    owner:
+      description: На кого выдан сертификат, актуально только для сертификатов с `type = microsoft`.
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    url:
+      description: Ссылка на страницу с описанием сертификата.
+      $ref: 'shared://Text'
+      nullable: true
+
+ActionsObject:
+  description: Объект `actions`
+  type: object
+  properties:
+    download:
+      description: Ссылки для скачивания резюме в нескольких форматах ([подробнее](https://github.com/hhru/api/blob/master/docs/resumes.md#download-links)).
+      $ref: '#/DownloadObject'
+    download_with_contact:
+      description: Ссылки для скачивания резюме с контактами (происходит трата услуги) в нескольких форматах ([подробнее](https://github.com/hhru/api/blob/master/docs/resumes.md#download-links)).
+      $ref: '#/DownloadObject'
+      nullable: true
+    get_with_contact:
+      description: Ссылка для получения резюме с контактами (происходит трата услуги).
+      type: object
+      properties:
+        url:
+          description: Ссылка для получения резюме с контактами. Возвращает объект аналогичный [просмотру резюме](https://github.com/hhru/api/blob/master/docs/resumes.md#item)
+          $ref: 'shared://Url'
+
+DownloadObject:
+  description: Объект `download`
+  type: object
+  properties:
+    pdf:
+      description: pdf-версия резюме.
+      type: object
+      properties:
+        url:
+          description: ссылка для получения pdf-версии резюме.
+          $ref: 'shared://Url'
+    rtf:
+      description: rft-версия резюме.
+      type: object
+      properties:
+        url:
+          description: ссылка для получение rft-версии резюме.
+          $ref: 'shared://Url'
+
+DriverLicenseTypesObject:
+  description: Объект `driver_license_types`
+  type: object
+  properties:
+    id:
+      description: Категория водительских прав соискателя. Элемент справочника [тип водительских прав](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      $ref: 'shared://NotEmptyString'
+
+HHCurrency:
+  description: Элементы справочника `currency` HH
+  type: object
+  properties:
+    code:
+      description: Код
+      $ref: 'shared://NotEmptyString'
+    abbr:
+      description: Краткое обозначение
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название
+      $ref: 'shared://NotEmptyString'
+    default:
+      description: Используется ли в качестве валюты по умолчанию
+      $ref: 'shared://Boolean'
+    rate:
+      description: Курс по отношению к рублю
+      $ref: 'shared://Float'
+    in_use:
+      description: Можно ли использовать на данном хосте
+      $ref: 'shared://Boolean'
+
+HHDictionaries:
+  type: object
+  description: Справочники HH
+  additionalProperties:
+    description: Описание
+    type: array
+    items:
+      anyOf:
+        - $ref: '#/IdNameObject'
+        - $ref: '#/HHCurrency'
+  example:
+    vacancy_cluster:
+      - id: area
+        name: Регион
+    currency:
+      - code: AZN
+        abbr: AZN
+        name: Манаты
+        default: false
+        rate: 0.022424
+        in_use: false
+
+HHAreas:
+  description: Список регионов HH
+  type: array
+  items:
+    $ref: '#/IdNameObject'
+  example:
+    - id: '5'
+      name: 'Украина'
+
+HHLanguages:
+  description: Справочник языков
+  type: array
+  items:
+    $ref: '#/IdNameObject'
+  example:
+    - id: 'ita'
+      name: 'Итальянский'
+
+HHProfessionalRoles:
+  description: Справочник профессиональных ролей
+  type: array
+  items:
+    type: object
+    properties:
+      id:
+        description: Id роли
+        $ref: 'shared://NotEmptyString'
+      name:
+        description: Название роли
+        $ref: 'shared://NotEmptyString'
+      roles:
+        description: Список профессиональных ролей, входящих в эту категорию
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              description: Id роли
+              $ref: 'shared://NotEmptyString'
+            name:
+              description: Название роли
+              $ref: 'shared://NotEmptyString'
+            accept_incomplete_resumes:
+              description: На роль принимаются отклики неполным резюме
+              $ref: 'shared://Boolean'
+            is_default:
+              description: Дефолтная роль
+              $ref: 'shared://Boolean'
+
+HHSuggestions:
+  description: Подсказки по областям
+  type: array
+  items:
+      type: object
+      properties:
+        id:
+          description: Id подсказки
+          $ref: 'shared://NotEmptyString'
+        name:
+          description: Название подсказки
+          $ref: 'shared://NotEmptyString'
+
+HHSuggestionText:
+  $ref: 'shared://String'
+  description: Текст
+
+HHAuthData:
+  description: Данные по токену и сслыка на авторизацию
+  type: object
+  properties:
+      authLink:
+        description: Ссылка для авторизации
+        $ref: 'shared://Url'
+      tokenExist:
+        description: Проверка наличия токена
+        $ref: 'shared://Boolean'
+      tokenIsValid:
+        description: Валидность токена
+        $ref: 'shared://Boolean'
+
+parametersConnection:
+  description: Параметры для создания связи между кандидатом и резюме
+  type: object
+  properties:
+    $ref: '#/CandidateId'
+
+CandidateId:
+  $ref: 'shared://Integer'
+  description: Id кандидата
+
+GetResumeListByCandidateIdResponse:
+  type: array
+  description: Список резюме
+  items:
+    $ref: '#/CandidateResumeListItem'
+  required:
+    - items
+  example: [ ]
+
+CandidateResumeListItem:
+  description: Резюме кандидата
+  type: object
+  properties:
+    platform:
+      $ref: '#/VacancyPlaceEnum'
+      description: Тип платформы
+    resumeId:
+      $ref: 'shared://NotEmptyString'
+      description: Id резюме
+    resumeParams:
+      $ref: 'shared://SimpleObject'
+      description: Параметры резюме, специфичные для конкретной платформы
+    version:
+      $ref: 'shared://DateTime'
+      description: Дата последнего обновления резюме
+    candidateId:
+      $ref: '#/CandidateId'
+
+HHEmployersAddresses:
+  description: Адрес работодателя
+  type: array
+  items:
+    type: object
+    properties:
+      building:
+        $ref: 'shared://String'
+        description: Здание
+        nullable: true
+      city:
+        $ref: 'shared://NotEmptyString'
+        description: Город
+      street:
+        $ref: 'shared://NotEmptyString'
+        description: Улица
+        nullable: true
+      description:
+        $ref: 'shared://NotEmptyString'
+        description: Описание
+        nullable: true
+      lat:
+        $ref: 'shared://Float'
+        description: Географические координаты (Широта)
+      lng:
+        $ref: 'shared://Float'
+        description: Географические координаты (Долгота)
+      raw:
+        $ref: 'shared://NotEmptyString'
+        description: Полный адрес
+      id:
+        $ref: 'shared://NotEmptyString'
+        description: Id адреса
+      metro_stations:
+        description: 'Станции метро'
+        type: array
+        items:
+          $ref: '#/MetroStation'
+
+MetroStation:
+  description: Станция метро
+  type: object
+  properties:
+    station_id:
+      $ref: 'shared://NotEmptyString'
+      description: Id станции метро
+    station_name:
+      $ref: 'shared://NotEmptyString'
+      description: Название станции метро
+    line_id:
+      $ref: 'shared://NotEmptyString'
+      description: Id ветки метро
+    line_name:
+      $ref: 'shared://NotEmptyString'
+      description: Названиие ветки метро
+    lat:
+      $ref: 'shared://Float'
+      description: Географические координаты (Широта)
+    lng:
+      $ref: 'shared://Float'
+      description: Географические координаты (Долгота)
+
+HHManagers:
+  description: Менеджеры работодателя
+  type: object
+  properties:
+    found:
+      description: Найдено адресов
+      $ref: 'shared://PositiveInteger'
+      example: 2
+    items:
+      $ref: '#/ManagersListItem'
+      example: [ ]
+    page:
+      description: Страница
+      $ref: 'shared://PositiveInteger'
+      example: 0
+    pages:
+      description: Всего страниц
+      $ref: 'shared://PositiveInteger'
+      example: 1
+    per_page:
+      description: На странице
+      $ref: 'shared://PositiveInteger'
+      example: 20
+
+ManagersListItem:
+  description: Менеджер работодателя
+  type: array
+  items:
+    type: object
+    properties:
+      id:
+        description: Id менеджера
+        $ref: 'shared://NotEmptyString'
+      first_name:
+        description: Имя менеджера
+        $ref: 'shared://String'
+      last_name:
+        description: Фамилия менеджера
+        $ref: 'shared://String'
+      middle_name:
+        description: Отчество менеджера
+        $ref: 'shared://String'
+        nullable: true
+      position:
+        description: Должность менеджера
+        $ref: 'shared://String'
+        nullable: true
+      email:
+        description: Почта менеджера
+        $ref: 'shared://NotEmptyString'
+      area:
+        description: Регион проживания менеджера
+        type: object
+        properties:
+          id:
+            description: Id региона
+            $ref: 'shared://NotEmptyString'
+          name:
+            description: Название региона
+            $ref: 'shared://NotEmptyString'
+          url:
+            description: Ссылка на регион в справочнике
+            $ref: 'shared://NotEmptyString'
+      phone:
+        description: Номер телефона менеджера
+        $ref: '#/PhoneNumber'
+      additional_phone:
+        description: Дополнительный номер телефона
+        $ref: '#/PhoneNumber'
+        nullable: true
+      full_name:
+        description: ФИО
+        $ref: 'shared://NotEmptyString'
+      vacancies_count:
+        description: Количество вакансий
+        $ref: 'shared://PositiveInteger'
+        nullable: true
+      is_main_contact_person:
+        description: Основные контактные данные менеджера
+        $ref: 'shared://Boolean'
+
+PhoneNumber:
+  description: Номер телефона менеджера
+  type: object
+  properties:
+    comment:
+      description: Комментарий
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+    city:
+      description: Код города
+      $ref: 'shared://NotEmptyString'
+    number:
+      description: Номер
+      $ref: 'shared://NotEmptyString'
+    country:
+      description: Телефонный код
+      $ref: 'shared://NotEmptyString'
+
+HHPublicationTypes:
+  description: Типы публикации вакансии
+  type: object
+  properties:
+    items:
+      description: Массив с типами публикаций
+      type: array
+      items:
+        description: Элемент типов публикации вакансии
+        $ref: '#/ItemPublicationType'
+      example: [
+        {
+          "name": "Стандарт: без обновления",
+          "description": "Автоматически поднимается в поисковой выдаче вакансий каждые 3 дня; размещается на 30 дней. Вакансия видна только приглашенным кандидатам. Такую вакансию нельзя будет найти через поиск и увидеть неприглашенным кандидатам",
+          "available_publications_count": 21,
+          "vacancy_billing_type": {
+            "id": "standart"
+          },
+          "vacancy_types": [
+            {
+              "id": "closed"
+            },
+            {
+              "id": "open"
+            }
+          ],
+          "publications": [
+            {
+              "name": "Москва и Московская область",
+              "count": 10,
+              "areas_url": "https://api.hh.ru/areas?price_region_id=1000224&vacancy_publication_flag=true"
+            },
+            {
+              "name": "В любом регионе",
+              "count": 11,
+              "areas_url": "https://api.hh.ru/areas?vacancy_publication_flag=true"
+            }
+          ]
+        },
+        {
+          "name": "Премиум: неделя в топе",
+          "description": "Первые 7 дней публикация выделена цветом, брендирована логотипом вашей компании и находится вверху поисковой выдачи; вакансия отправляется в рассылке подходящим соискателям; размещается на 30 дней.",
+          "available_publications_count": 0,
+          "vacancy_billing_type": {
+            "id": "free"
+          },
+          "vacancy_types": [
+            {
+              "id": "open"
+            }
+          ],
+          "publications": []
+        }
+      ]
+
+ItemPublicationType:
+  description: Тип публикации вакансии
+  type: object
+  properties:
+    name:
+      description: Название типа публикации
+      $ref: 'shared://NotEmptyString'
+    description:
+      description: Описание типа публикации
+      $ref: 'shared://NotEmptyString'
+    available_publications_count:
+      description: Общее количество публикаций, доступных данному менеджеру
+      $ref: 'shared://PositiveInteger'
+    vacancy_billing_type:
+      description: Биллинговый тип
+      type: object
+      properties:
+        id:
+          description: Id Биллингового типа
+          $ref: 'shared://NotEmptyString'
+    vacancy_types:
+      description: Список типов вакансии
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            description: Id типа вакансии
+            $ref: 'shared://NotEmptyString'
+    publications:
+      description: Список регионов, где может быть опубликована вакансия и количество публикаций, доступных работодателю
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            description: Название региона
+            $ref: 'shared://NotEmptyString'
+          count:
+            description: Количество публикаций в регионе, доступных работодателю
+            $ref: 'shared://PositiveInteger'
+          areas_url:
+            description: URL на список регионов, в которых можно опубликовать вакансию данного типа.
+            $ref: 'shared://NotEmptyString'
+
+ResumeComments:
+  description: Комментарии к резюме
+  type: object
+  properties:
+    found:
+      description: Общее количество
+      $ref: 'shared://PositiveInteger'
+    page:
+      description: Страница
+      $ref: 'shared://PositiveInteger'
+    pages:
+      description: Страницы
+      $ref: 'shared://PositiveInteger'
+    per_page:
+      description: Количество на одной странице
+      $ref: 'shared://PositiveInteger'
+    items:
+      description: Список комментариев
+      type: array
+      items:
+        description: Комментарий к соискателю
+        $ref: '#/ResumeComment'
+
+ResumeComment:
+  description: Комментарии
+  type: object
+  properties:
+    id:
+      description: Id комментария
+      $ref: 'shared://NotEmptyString'
+    author:
+      description: Автор комментария
+      $ref: 'shared://NotEmptyString'
+    createdAt:
+      description: Дата создания комментария
+      $ref: 'shared://NotEmptyString'
+    isMine:
+      description: Комментарий написан текущем пользователем?
+      $ref: 'shared://Boolean'
+    text:
+      description: Cодержание комментария (текст, который может содержать символы новой строки)
+      $ref: 'shared://Text'
+
+HHVacancyBody:
+  type: object
+  description: Тело запроса для публикации вакансии на HH
+  externalDocs:
+    description: Описание API
+    url: https://github.com/hhru/api/blob/master/docs/employer_vacancies.md
+  properties:
+    name:
+      description: Название вакансии
+      $ref: 'shared://String'
+    description:
+      description: Описание в html, не менее 200 символов
+      $ref: 'shared://Text'
+    key_skills:
+      description: Список ключевых навыков, не более 30
+      $ref: '#/KeySkillsItems'
+    professional_roles:
+      description: Массив профессиональных ролей с количеством элементов равным 1 (если передать больше возникнет [ошибка](https://github.com/hhru/api/blob/master/docs/errors.md#%D0%BF%D1%80%D0%B8%D1%87%D0%B8%D0%BD%D1%8B-%D0%B2%D0%BE%D0%B7%D0%BD%D0%B8%D0%BA%D0%BD%D0%BE%D0%B2%D0%B5%D0%BD%D0%B8%D1%8F-%D0%BE%D1%88%D0%B8%D0%B1%D0%BE%D0%BA) is_too_long) [при использовании параметра](https://github.com/hhru/api/blob/master/docs/employer_vacancies.md#creation-with_professional_roles) with_professional_roles=true
+      $ref: '#/ProfessionalRolesItems'
+    area:
+      description: Город публикации из [справочника](https://github.com/hhru/api/blob/master/docs/areas.md)
+      type: object
+      properties:
+        id:
+          description: Id города публикации
+          $ref: 'shared://NotEmptyString'
+    type:
+      description: тип из справочника [vacancy_type](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      type: object
+      properties:
+        id:
+          description: Id типа вакансии
+          $ref: 'shared://NotEmptyString'
+    billing_type:
+      description: Биллинговый тип [из справочника vacancy_billing_type](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      type: object
+      properties:
+        id:
+          description: Id биллингового типа
+          $ref: 'shared://NotEmptyString'
+    salary:
+      description: Зарплата
+      $ref: '#/SalaryPublication'
+    address:
+      description: Адрес из [списка доступных адресов работодателя](https://github.com/hhru/api/blob/master/docs/employer_addresses.md)
+      type: object
+      nullable: true
+      properties:
+        id:
+          description: Id адреса работодателя
+          $ref: 'shared://NotEmptyString'
+    experience:
+      description: Требуемый опыт работы из [справочника experience](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      type: object
+      nullable: true
+      properties:
+        id:
+          description: Id опыта работы
+          $ref: 'shared://NotEmptyString'
+    schedule:
+      description: График работы из [справочника schedule](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      type: object
+      nullable: true
+      properties:
+        id:
+          description: Id графика работы
+          $ref: 'shared://NotEmptyString'
+    employment:
+      description: Тип занятости из [справочника employment](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      type: object
+      properties:
+        id:
+          description: Id типа занятости
+          $ref: 'shared://NotEmptyString'
+    contacts:
+      description: Контактная информация менеджера вакансии
+      type: object
+      nullable: true
+      properties:
+        name:
+          description: Контактное лицо
+          $ref: 'shared://String'
+        email:
+          description: Email менеджера вакансии
+          $ref: 'shared://NotEmptyString'
+        phones:
+          description: Список телефонов для связи
+          $ref: '#/PhonesItems'
+    manager:
+      description: Контактное лицо (менеджер) по размещаемой вакансии, по умолчанию текущий пользователь
+      type: object
+      properties:
+        id:
+          description: Id менеджера
+          $ref: 'shared://NotEmptyString'
+      nullable: true
+    response_notifications:
+      description: Уведомлять о новых откликах
+      $ref: 'shared://Boolean'
+      nullable: true
+    allow_messages:
+      description: Возможность [переписки с кандидатами](https://github.com/hhru/api/blob/master/docs/employer_negotiations.md) по данной вакансии
+      $ref: 'shared://Boolean'
+      nullable: true
+    response_letter_required:
+      description: Требовать сопроводительное письмо
+      $ref: 'shared://Boolean'
+      nullable: true
+    accept_handicapped:
+      description: Указание, что вакансия доступна для соискателей с инвалидностью
+      $ref: 'shared://Boolean'
+      nullable: true
+    accept_kids:
+      description: Указание, что вакансия доступна для соискателей от 14 лет [подробнее](https://github.com/hhru/api/blob/master/docs/employer_vacancies_accept_kids.md#accept-kids)
+      $ref: 'shared://Boolean'
+      nullable: true
+    branded_template:
+      description: Брендированное оформление вакансии из [справочника](https://github.com/hhru/api/blob/master/docs/employer_vacancy_branded_templates.md#list)
+      type: object
+      nullable: true
+      properties:
+        id:
+          description: Id оформления вакансии
+          $ref: 'shared://NotEmptyString'
+    driver_license_types:
+      description: Список требуемых категорий водительских прав
+      $ref: '#/DriverLicenseTypesItems'
+      nullable: true
+    accept_incomplete_resumes:
+      description: Разрешен ли отклик на вакансию неполным резюме
+      $ref: 'shared://Boolean'
+      nullable: true
+    working_days:
+      description: Список рабочих дней
+      $ref: '#/WorkingDaysItems'
+      nullable: true
+    working_time_intervals:
+      description: Список с временными интервалами работы
+      $ref: '#/WorkingTimesItems'
+      nullable: true
+    working_time_modes:
+      description: Список режимов времени работы
+      $ref: '#/WorkingTimeModesItems'
+      nullable: true
+    accept_temporary:
+      description: Указание, что вакансия доступна с временным трудоустройством
+      $ref: 'shared://Boolean'
+      nullable: true
+    languages:
+      description: Список языков, которыми владеет соискатель. Элементы справочника [languages](https://github.com/hhru/api/blob/master/docs/languages.md).
+      type: array
+      nullable: true
+      items:
+        $ref: '#/LanguageVacancy'
+
+LanguageVacancy:
+  description: Объект `language` для публикации вакансии
+  type: object
+  properties:
+    id:
+      description: Идентификатор языка.
+      $ref: 'shared://NotEmptyString'
+    level:
+      description: Уровень знания языка. Элемент справочника [language_level](https://github.com/hhru/api/blob/master/docs/dictionaries.md).
+      type: object
+      properties:
+        id:
+          description: Идентификатор уровня знания языка.
+          $ref: 'shared://NotEmptyString'
+
+KeySkillsItems:
+  description: Ключевой навык из публикации
+  type: array
+  items:
+    description: Ключевой навык
+    type: object
+    properties:
+      name:
+        description: Название ключевого навыка
+        $ref: 'shared://String'
+
+ProfessionalRolesItems:
+  description: Массив с профессиональными ролями
+  type: array
+  items:
+    description: Профессиональная роль
+    type: object
+    properties:
+      id:
+        description: Индификатор профессиональной роли из [справочника](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1professional_roles/get)
+        $ref: 'shared://NotEmptyString'
+
+PhonesItems:
+  description: Массив со списком телефонов
+  type: array
+  items:
+    description: Телефон
+    type: object
+    properties:
+      country:
+        description: Код страны
+        $ref: 'shared://NotEmptyString'
+      city:
+        description: Код города
+        $ref: 'shared://NotEmptyString'
+      number:
+        description: Телефон
+        $ref: 'shared://NotEmptyString'
+      comment:
+        description: Комментарий (удобное время для звонка по этому номеру)
+        $ref: 'shared://NotEmptyString'
+        nullable: true
+
+DriverLicenseTypesItems:
+  description: Массив со списком требуемых категорий водительских прав
+  type: array
+  items:
+    description: Категории водительских прав. Элемент справочника [driver_license_types](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+    type: object
+    properties:
+      id:
+        description: Id категории водительских прав
+        $ref: 'shared://NotEmptyString'
+
+WorkingDaysItems:
+  description: Массив со списком рабочих дней
+  type: array
+  items:
+    description: Рабочие дни из [справочника working_days](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+    type: object
+    properties:
+      id:
+        description: Id рабочих дней
+        $ref: 'shared://NotEmptyString'
+
+WorkingTimesItems:
+  description: Массив со списком временных интервалов работы
+  type: array
+  items:
+    description: Временной интервал работы из [справочника working_time_intervals](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+    type: object
+    properties:
+      id:
+        description: Id интервала работы
+        $ref: 'shared://NotEmptyString'
+
+WorkingTimeModesItems:
+  description: Массив со списоком режимов времени работы
+  type: array
+  items:
+    description: Режимы времени работы из [справочника working_time_modes](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+    type: object
+    properties:
+      id:
+        description: Id режима времени работы
+        $ref: 'shared://NotEmptyString'
+
+PostVacancyResponse:
+  description: Успешный ответ
+  type: object
+  properties:
+    id:
+      description: Id добавленной вакансии
+      $ref: 'shared://NotEmptyString'
+
+VacancyId:
+  $ref: 'shared://Integer'
+  description: Id вакансии
+
+ArchiveVacancyResponse:
+  description: Успешный ответ
+  type: object
+  properties:
+    id:
+      description: Id архивированной вакансии
+      $ref: 'shared://NotEmptyString'
+
+GetResponseListResponse:
+  description: Успешный ответ
+  type: object
+  properties:
+    found:
+      description: Количество откликов на публикацию
+      $ref: 'shared://PositiveInteger'
+    pages:
+      description: Количество страниц с откликами
+      $ref: 'shared://PositiveInteger'
+    per_page:
+      description: Количество откликов на страницу
+      $ref: 'shared://PositiveInteger'
+    items:
+      description: Отклики на публикацию
+      $ref: '#/ResponseListItems'
+
+ResponseListItems:
+  description: Массив откликов на публикацию
+  type: array
+  items:
+    description: Отклик на публикацию
+    type: object
+    properties:
+      id:
+        description: Id отклика
+        $ref: 'shared://NotEmptyString'
+      state:
+        description: Текущее состояние отклика. Разрешенные значения находятся в справочнике [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md) в разделе negotiations_state
+        $ref: '#/State'
+      hidden:
+        description: Скрыт ли текущий отклик (True - отклик скрыт, False - отклик активен)
+        $ref: 'shared://Boolean'
+      created_at:
+        description: Дата и время создания отклика
+        $ref: 'shared://NotEmptyString'
+      updated_at:
+        description: Дата и время последнего обновления отклика
+        $ref: 'shared://NotEmptyString'
+      url:
+        description: Ссылка на полную версию отклика
+        $ref: 'shared://NotEmptyString'
+      resume:
+        description: '[Короткое представление резюме](https://github.com/hhru/api/blob/master/docs/employer_resumes.md#resume-nano)'
+        nullable: true
+        $ref: 'shared://SimpleObject'
+      vacancy:
+        description: '[Короткое представление вакансии](https://github.com/hhru/api/blob/master/docs/vacancies.md#nano)'
+        $ref: 'shared://SimpleObject'
+      phone_calls:
+        description: '[Представление истории звонков по вакансии](https://github.com/hhru/api/blob/master/docs/phone_calls.md)'
+        $ref: '#/PhoneCalls'
+      has_updates:
+        description: Есть ли непросмотренные сообщения в отклике. Флаг сбрасывается при различных действиях по отклику, например, просмотре списка сообщений
+        $ref: 'shared://Boolean'
+      viewed_by_opponent:
+        description: Был ли отклик просмотрен работодателем
+        $ref: 'shared://Boolean'
+      messaging_status:
+        description: Текущий статус переписки
+        $ref: 'shared://NotEmptyString'
+      decline_allowed:
+        description: Возможно ли скрыть отклик вместе с сообщением работодателю об отказе
+        $ref: 'shared://Boolean'
+      source:
+        description: Источник отклика. Возможные значения NEGOTIATION, PHONE_CALL, CHAT.
+        $ref: 'shared://NotEmptyString'
+
+PhoneCalls:
+  description: История звонков по вакансии
+  type: object
+  properties:
+    picked_up_phone_by_opponent:
+      description: Оппонент взял трубку
+      $ref: 'shared://Boolean'
+    items:
+      description: Звонки
+      type: array
+      items:
+        description: Звонок
+        type: object
+        properties:
+          id:
+            description: Id звонка
+            $ref: 'shared://NotEmptyString'
+          status:
+            description: Статус звонка
+            $ref: 'shared://NotEmptyString'
+          creation_time:
+            description: Время начала звонка
+            $ref: 'shared://NotEmptyString'
+          last_change_time:
+            description: Время окончания звонка
+            $ref: 'shared://NotEmptyString'
+          duration_seconds:
+            description: Продолжительность звонка
+            $ref: 'shared://PositiveInteger'
+
+AuthorId:
+  $ref: 'shared://Integer'
+  description: Id пользователя
+
+ResponseId:
+  $ref: 'shared://NotEmptyString'
+  description: Id отклика от соискателя
+
+GetResponse:
+  description: Отклик из коллекции от HH
+  type: object
+  properties:
+    id:
+      description: Id отклика
+      $ref: 'shared://NotEmptyString'
+    created_at:
+      description: Дата и время создания отклика
+      $ref: 'shared://NotEmptyString'
+    updated_at:
+      description: Дата и время обновления отклика
+      $ref: 'shared://NotEmptyString'
+    has_updates:
+      description: Есть ли непросмотренные сообщения в отклике. Флаг сбрасывается при различных действиях по отклику, например, просмотре списка сообщений
+      $ref: 'shared://Boolean'
+    messages_url:
+      description: Посмотреть список сообщений в отклике
+      $ref: 'shared://NotEmptyString'
+    messaging_status:
+      description: Указывает на состояние переписки. Возможные значения содержатся в [справочнике messaging_status](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/dictionaries.md)
+      $ref: 'shared://NotEmptyString'
+    state:
+      description: Текущее состояние отклика. Разрешенные значения находятся в справочнике [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md) в разделе negotiations_state
+      $ref: '#/State'
+    employer_state:
+      description: Текущее [работодательское состояние отклика](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/employer_negotiations.md#term-employer-state)
+      $ref: '#/EmployerState'
+    actions:
+      description: Возможные [действия по отклику/приглашению](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/employer_negotiations.md#actions-info)
+      $ref: '#/Actions'
+    url:
+      description: url, на который необходимо выполнить запрос
+      $ref: 'shared://NotEmptyString'
+    resulting_employer_state:
+      description: >
+        [Работодательское состояние](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/employer_negotiations.md#term-employer-state) по отклику/приглашению, которое будет после совершения действия. Если действие не меняет состояние – null.
+      $ref: '#/ResultingEmployerState'
+    templates:
+      description: Шаблоны писем. Содержит идентификатор шаблона и url для [получения текста по шаблону](https://github.com/hhru/api/blob/0334b0c333e9d2a912e19c49ce98a63554e20a03/docs/negotiation_message_templates.md).
+      $ref: '#/Templates'
+    arguments:
+      description: Обязательные и дополнительные аргументы для запроса
+      $ref: '#/Arguments'
+
+State:
+  description: Состояние отклика/приглашения
+  type: object
+  properties:
+    id:
+      description: Id состояния отклика/приглашения
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Названия состояния
+      $ref: 'shared://NotEmptyString'
+
+EmployerState:
+  description: Работодательское состояние отклика
+  type: object
+  properties:
+    id:
+      description: Id состояния работодательского отклика
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Названия состояния
+      $ref: 'shared://NotEmptyString'
+
+Actions:
+  description: Действия по отклику/приглашению
+  type: array
+  items:
+    description: Массив действий по отклику/приглашению
+    $ref: '#/ActionsItem'
+
+ActionsItem:
+  description: Действие по отклику/приглашению
+  type: object
+  properties:
+    id:
+      description: Идентификатор действия
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название действия
+      $ref: 'shared://NotEmptyString'
+    enabled:
+      description: Возможно ли действие совершить
+      $ref: 'shared://Boolean'
+    method:
+      description: HTTP метод, который необходимо выполнить
+      $ref: 'shared://NotEmptyString'
+
+ResultingEmployerState:
+  description: Работодательское состояние по отклику/приглашению
+  type: object
+  properties:
+    id:
+      description: Id работодательского состояние
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Названия работодательского состояние
+      $ref: 'shared://NotEmptyString'
+
+Templates:
+  description: Массив шаблонов
+  type: array
+  items:
+    description: Шаблон
+    $ref: '#/TemplatesItem'
+
+TemplatesItem:
+  description: Действие по отклику/приглашению
+  type: object
+  properties:
+    id:
+      description: Идентификатор шаблона
+      $ref: 'shared://NotEmptyString'
+    url:
+      description: url, на который необходимо выполнить запрос
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название шаблона
+      $ref: 'shared://NotEmptyString'
+    quick:
+      description: Быстрый ответ или нет
+      $ref: 'shared://Boolean'
+
+Arguments:
+  description: Аргументы для запроса
+  type: array
+  items:
+    $ref: '#/Argument'
+
+Argument:
+  description: Аргумент для запроса
+  type: object
+  properties:
+    id:
+      description: Идентификатор аргумента
+      $ref: 'shared://NotEmptyString'
+    required:
+      description: Обязательность аргумента
+      $ref: 'shared://Boolean'
+    required_arguments:
+      description: Аргументы, которые необходимо приложить, если указан данный аргумент. Например, адрес является необязательным, но при его указании необходимо указать также и сообщение.
+      $ref: '#/RequiredArguments'
+
+RequiredArguments:
+  description: Массив обязательных аргументов
+  type: array
+  items:
+    description: Обязательный аргумент
+    type: object
+    properties:
+      id:
+        description: Идентификатор обязательного аргумента
+        $ref: 'shared://NotEmptyString'
+
+GetTemplatesResponse:
+  description: Шаблоны для получения
+  type: object
+  properties:
+    mail:
+      description: Шаблон для почты
+      $ref: '#/MailTemplate'
+    sms:
+      description: Шаблон для SMS-сообщения
+      $ref: '#/SmsTemplate'
+  example:
+    - {
+      "mail": {
+        "text": "Здравствуйте, Иван Иванович! Благодарим Вас за отклик на вакансию... "
+      }
+    }
+
+MailTemplate:
+  description: Шаблон для почты
+  type: object
+  properties:
+    text:
+      description: Текст сообщения, отправляемого соискателю по электронной почте при приглашении/отказе
+      $ref: 'shared://Text'
+
+SmsTemplate:
+  description: Шаблон для сообщений
+  type: object
+  properties:
+    text:
+      description: Текст, отправляемого соискателю SMS-сообщения
+      $ref: 'shared://Text'
+
+Message:
+  description: Текст сообщения, отправляемого соискателю
+  $ref: 'shared://Text'
+
+Sms:
+  description: Текст sms-сообщения, отправляемого соискателю
+  $ref: 'shared://Text'
+
+GetBrandedTemplatesResponse:
+  description: Брендированные шаблоны для публикации вакансия на hh.ru
+  type: array
+  items:
+    description: Брендированный шаблон
+    $ref: '#/BrandedTemplate'
+
+BrandedTemplate:
+  description: Шаблон
+  type: object
+  properties:
+    id:
+      description: Идентификатор шаблона
+      $ref: 'shared://NotEmptyString'
+    name:
+      description: Название шаблона
+      $ref: 'shared://NotEmptyString'
+
+GetCurrentUserResponse:
+  description: Информация о текущем пользователе
+  oneOf:
+    - $ref: '#/Applicant'
+    - $ref: '#/Application'
+    - $ref: '#/Employer'
+
+Applicant:
+  description: Информация о текущем пользователе, если он является сооискателем
+  type: object
+  properties:
+    auth_type:
+      description: Тип авторизации
+      $ref: 'shared://String'
+    is_admin:
+      description: Является ли текущий пользователь администратором сайта
+      $ref: 'shared://Boolean'
+    is_applicant:
+      description: Является ли текущий пользователь соискателем
+      $ref: 'shared://Boolean'
+    is_application:
+      description: Является ли авторизованный клиент приложением
+      $ref: 'shared://Boolean'
+    is_employer:
+      description: Является ли текущий пользователь работодателем
+      $ref: 'shared://Boolean'
+    email:
+      description: Email текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    first_name:
+      description: Имя текущего пользователя
+      $ref: 'shared://String'
+    id:
+      description: Идентификатор текущего пользователя
+      $ref: 'shared://String'
+    last_name:
+      description: Фамилия текущего пользователя
+      $ref: 'shared://String'
+    middle_name:
+      description: Отчество текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    phone:
+      description: Телефон текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    counters:
+      description: Информация о счетчиках соискателя
+      $ref: '#/Counters'
+    is_in_search:
+      description: Имеет ли текущий пользователь статус "ищу работу"
+      $ref: 'shared://Boolean'
+    negotiations_url:
+      description: URL, на который нужно сделать GET-запрос, чтобы получить список откликов/приглашений текущего пользователя
+      $ref: 'shared://String'
+    resumes_url:
+      description: URL, на который нужно сделать GET-запрос, чтобы получить список резюме текущего пользователя
+      $ref: 'shared://String'
+    user_statuses:
+      description: Пользовательский статусы соискателя
+      $ref: '#/UserStatuses'
+
+Application:
+  description: Информация о текущем пользователе, если он является авторизованным клиентом приложения
+  type: object
+  properties:
+    auth_type:
+      description: Тип авторизации
+      $ref: 'shared://String'
+    is_admin:
+      description: Является ли текущий пользователь администратором сайта
+      $ref: 'shared://Boolean'
+    is_applicant:
+      description: Является ли текущий пользователь соискателем
+      $ref: 'shared://Boolean'
+    is_application:
+      description: Является ли авторизованный клиент приложением
+      $ref: 'shared://Boolean'
+    is_employer:
+      description: Является ли текущий пользователь работодателем
+      $ref: 'shared://Boolean'
+
+Employer:
+  description: Информация о текущем пользователе, если он является работодателем
+  type: object
+  properties:
+    auth_type:
+      description: Тип авторизации
+      $ref: 'shared://String'
+    is_admin:
+      description: Является ли текущий пользователь администратором сайта
+      $ref: 'shared://Boolean'
+    is_applicant:
+      description: Является ли текущий пользователь соискателем
+      $ref: 'shared://Boolean'
+    is_application:
+      description: Является ли авторизованный клиент приложением
+      $ref: 'shared://Boolean'
+    is_employer:
+      description: Является ли текущий пользователь работодателем
+      $ref: 'shared://Boolean'
+    email:
+      description: Email текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    first_name:
+      description: Имя текущего пользователя
+      $ref: 'shared://String'
+    id:
+      description: Идентификатор текущего пользователя
+      $ref: 'shared://String'
+    last_name:
+      description: Фамилия текущего пользователя
+      $ref: 'shared://String'
+    middle_name:
+      description: Отчество текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    phone:
+      description: Телефон текущего пользователя
+      $ref: 'shared://String'
+      nullable: true
+    employer:
+      description: Информация о компании работодателя
+      $ref: '#/EmployerInfo'
+    manager:
+      description: Информация о менеджере компании
+      $ref: '#/Manager'
+    personal_manager:
+      description: Информация о персональном менеджере для работодателя
+      $ref: '#/PersonalManager'
+
+Counters:
+  description: Счетчики соискателя
+  type: object
+  properties:
+    new_resume_views:
+      description: Общее количество новых просмотров всех резюме текущего пользователя
+      $ref: 'shared://PositiveInteger'
+    resumes_count:
+      description: Общее количество созданных резюме текущего пользователя
+      $ref: 'shared://PositiveInteger'
+    unread_negotiations:
+      description: Количество новых непрочитанных откликов (у которых has_updates::true)
+      $ref: 'shared://PositiveInteger'
+
+UserStatuses:
+  description: Статусы соискателя
+  type: object
+  properties:
+    job_search_status:
+      description: Статус поиска работы соискателем
+      ref: '#/JobSearchStatus'
+    when_can_start_work_status:
+      description: Статус "когда смогу выйти на работу"
+      $ref: '#/WhenCanStartWorkStatus'
+
+JobSearchStatus:
+  description: Статус поиска работы соискателем
+  type: object
+  properties:
+    description:
+      description: Детальное описание статуса
+      $ref: 'shared://String'
+    id:
+      description: Идентификатор статуса
+      $ref: 'shared://String'
+    name:
+      description: Название статуса
+      $ref: 'shared://String'
+
+WhenCanStartWorkStatus:
+  description: Статус "когда смогу выйти на работу"
+  type: object
+  properties:
+    id:
+      description: Идентификатор статуса
+      $ref: 'shared://String'
+    name:
+      description: Название статуса
+      $ref: 'shared://String'
+
+EmployerInfo:
+  description: Информация о компании работодателя
+  type: object
+  properties:
+    id:
+      description: Идентификатор компании
+      $ref: 'shared://String'
+    manager_id:
+      description: Идентификатор персонального менеджера
+      $ref: 'shared://String'
+    name:
+      description: Название компании
+      $ref: 'shared://String'
+
+Manager:
+  description: Информация о пользователе, как о менеджере компании
+  type: object
+  properties:
+    has_admin_rights:
+      description: Обладает ли текущий менеджер правами администратора
+      $ref: 'shared://Boolean'
+    has_multiple_manager_accounts:
+      description: Существует ли у пользователя несколько [рабочих аккаунтов](https://api.hh.ru/openapi/manager_accounts.md)
+      $ref: 'shared://Boolean'
+    id:
+      description: Идентификатор менеджера
+      $ref: 'shared://String'
+    is_main_contact_person:
+      description: Является ли текущий менеджер главным контактным лицом компании
+      $ref: 'shared://Boolean'
+    manager_settings_url:
+      description: URL, на который нужно сделать GET запрос, чтобы получить (предпочтения менеджера)[https://api.hh.ru/openapi/manager_settings.md]
+      $ref: 'shared://String'
+
+PersonalManager:
+  description: Информация о персональном менеджере для работодателя
+  type: object
+  properties:
+    email:
+      description: email персонального менеджера
+      $ref: 'shared://String'
+    first_name:
+      description: Имя персонального менеджера
+      $ref: 'shared://String'
+    id:
+      description: Идентификатор персонального менеджера
+      $ref: 'shared://String'
+    is_available:
+      description: Доступен ли менеджер в данный момент
+      $ref: 'shared://Boolean'
+    last_name:
+      description: Фамилия персонального менеджера
+      $ref: 'shared://String'
+    photo_urls:
+      description: Объект с фотографиями менеджера
+      $ref: '#/PhotoUrls'
+    unavailable:
+      description: Информация об отсутствии менеджера, либо null, если менеджер доступен
+      $ref: '#/Until'
+
+PhotoUrls:
+  description: Объект с фотографиями менеджера
+  type: object
+  properties:
+    big:
+      description: URL большой фотографии менеджера
+      $ref: 'shared://String'
+      nullable: true
+    small:
+      description: URL маленькой фотографии менеджера
+      $ref: 'shared://String'
+      nullable: true
+
+Until:
+  description: Время, до которого менеджер недоступен для контакта
+  $ref: 'shared://String'
+
+InviteStatus:
+  description: Тип приглашения
+  $ref: 'shared://String'
+
+GetCollectionResponse:
+  description: Успешный ответ при получении коллекции из откликов/приглашений
+  type: object
+  properties:
+    found:
+      description: Количество откликов/приглашений на публикацию
+      $ref: 'shared://PositiveInteger'
+    pages:
+      description: Количество страниц с откликами/приглашениями
+      $ref: 'shared://PositiveInteger'
+    per_page:
+      description: Количество откликов/приглашений на страницу
+      $ref: 'shared://PositiveInteger'
+    items:
+      description: Отклики/Приглашений на публикацию
+      oneOf:
+        - $ref: '#/ResponseListItems'
+        - $ref: '#/InvitationListItems'
+
+InvitationListItems:
+  description: Массив приглашений на публикацию
+  type: array
+  items:
+    description: Приглашение на публикацию
+    type: object
+    properties:
+      id:
+        description: Id приглашения
+        $ref: 'shared://NotEmptyString'
+      state:
+        description: Текущее состояние элемента коллекции. Разрешенные значения находятся в справочнике [/dictionaries](https://github.com/hhru/api/blob/master/docs/dictionaries.md) в разделе negotiations_state
+        $ref: '#/State'
+      hidden:
+        description: Скрыто ли текущиее приглашение (True - отклик скрыт, False - отклик активен)
+        $ref: 'shared://Boolean'
+      created_at:
+        description: Дата и время создания приглашения
+        $ref: 'shared://NotEmptyString'
+      updated_at:
+        description: Дата и время последнего обновления приглашения
+        $ref: 'shared://NotEmptyString'
+      url:
+        description: Ссылка на полную версию приглашения
+        $ref: 'shared://NotEmptyString'
+      resume:
+        description: '[Короткое представление резюме](https://github.com/hhru/api/blob/master/docs/employer_resumes.md#resume-nano)'
+        nullable: true
+        $ref: 'shared://SimpleObject'
+      vacancy:
+        description: '[Короткое представление вакансии](https://github.com/hhru/api/blob/master/docs/vacancies.md#nano)'
+        $ref: 'shared://SimpleObject'
+      phone_calls:
+        description: '[Представление истории звонков по вакансии](https://github.com/hhru/api/blob/master/docs/phone_calls.md)'
+        $ref: '#/PhoneCalls'
+      has_updates:
+        description: Есть ли непросмотренные сообщения в приглашении. Флаг сбрасывается при различных действиях по приглашению, например, просмотре списка сообщений
+        $ref: 'shared://Boolean'
+      viewed_by_opponent:
+        description: Было ли приглашение просмотрено соискателем
+        $ref: 'shared://Boolean'
+      messaging_status:
+        description: Текущий статус переписки
+        $ref: 'shared://NotEmptyString'
+      decline_allowed:
+        description: Возможно ли скрыть приглашение вместе с сообщением работодателю об отказе
+        $ref: 'shared://Boolean'
+      source:
+        description: Источник приглашения. Возможные значения NEGOTIATION, PHONE_CALL, CHAT.
+        $ref: 'shared://NotEmptyString'
+
+CollectionType:
+  description: Коллекция из списка
+  $ref: 'shared://String'
+
+AddressId:
+  description: Адрес
+  $ref: 'shared://PositiveInteger'
+
+Resume:
+  description: Параметры для добавления резюме
+  type: object
+  properties:
+    platform:
+      description: Тип job платформы
+      $ref: 'enum://hr/vacancyPlaces?ITERNAL_BASE,RESUME_EXTENSION'
+    candidateId:
+      description: id кандидата
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    resumeId:
+      description: id Резюме
+      $ref: 'shared://String'
+      nullable: true
+    resumeParams:
+      description: Данные о резюме
+      $ref: 'shared://SimpleObject'
+      # todo: Изменить на ResumeParams
+    patch:
+      description: Обновленные данные
+      $ref: 'shared://SimpleObject'
+      nullable: true
+    version:
+      description: Промежуточная дата обновления
+      $ref: 'shared://DateTime'
+      nullable: true
+
+Experience:
+  description: Информация об опыте работы
+  type: object
+  properties:
+    company:
+      description: Организация.
+      $ref: 'shared://Text'
+      nullable: true
+    position:
+      description: Должность.
+      $ref: 'shared://Text'
+      nullable: true
+    start:
+      description: Начало работы (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    end:
+      description: Окончание работы (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    description:
+      description: Обязанности, функции, достижения.
+      $ref: 'shared://Text'
+      nullable: true
+
+Education:
+  description: Информация об образовании
+  type: object
+  properties:
+    level:
+      description: Уровень образования
+      $ref: 'enum://hr/EducationType'
+      nullable: true
+    name:
+      description: Название учебного заведения.
+      $ref: 'shared://Text'
+      nullable: true
+    result:
+      description: Специальность / специализация.
+      $ref: 'shared://Text'
+      nullable: true
+    start:
+      description: Начало обучения (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    end:
+      description: Окончание обучения (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+
+Training:
+  description: Информация о повышении квалификации
+  type: object
+  properties:
+    name:
+      description: Название учебного заведения.
+      $ref: 'shared://Text'
+      nullable: true
+    result:
+      description: Специальность / специализация.
+      $ref: 'shared://Text'
+      nullable: true
+    start:
+      description: Начало обучения (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+    end:
+      description: Окончание обучения (дата в формате ГГГГ-ММ-ДД).
+      $ref: 'shared://Date'
+      nullable: true
+
+ResumeParams:
+  description: Данные резюме
+  type: object
+  properties:
+    createdAt:
+      description: Дата создания кандидата
+      $ref: 'shared://DateTime'
+      nullable: true
+    title:
+      description: Название резюме
+      $ref: 'shared://String'
+      nullable: true
+    position:
+      nullable: true
+      description: id Должности
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            description: Название должности
+            nullable: true
+            $ref: 'shared://PositiveInteger'
+          name:
+            description: id должности из сервиса
+            nullable: true
+            $ref: 'shared://String'
+    salary:
+      description: Зарплатные ожидания
+      $ref: 'shared://NotEmptyString'
+      nullable: true
+      example: 10000
+    professionalRoles:
+      nullable: true
+      description: Сферы деятельности
+      type: array
+      items:
+        $ref: 'shared://String'
+    employment:
+      description: Занятость
+      nullable: true
+      type: array
+      items:
+        $ref: 'shared://String'
+    schedule:
+      description: График работы
+      nullable: true
+      type: array
+      items:
+        $ref: 'shared://String'
+    relocationCitiesIds:
+      nullable: true
+      description: Города для релокации
+      $ref: 'shared://ArrayOfPositiveInteger'
+    experienceStatus:
+      nullable: true
+      description: Статус образования кандидата
+      $ref: 'enum://hr/ExperienceStatus'
+    educationStatus:
+      nullable: true
+      description: Статус образования кандидата
+      $ref: 'enum://hr/EducationStatus'
+    experience:
+      nullable: true
+      description: Опыт работы
+      type: array
+      items:
+        description: Информация об опыте работы
+        $ref: '#/Experience'
+    education:
+      description: Образование
+      nullable: true
+      type: array
+      items:
+        description: Информация об образовании
+        $ref: '#/Education'
+    training:
+      description: Повышение квалификации
+      nullable: true
+      type: array
+      items:
+        description: Информация о повышении квалификации
+        $ref: '#/Training'
+    keySkills:
+      description: Ключевые навыки
+      nullable: true
+      type: array
+      items:
+        $ref: '#/KeySkill'
+    driveLicense:
+      description: Опыт вождения
+      nullable: true
+      type: object
+      properties:
+        driveCategory:
+          description: Категории вождения
+          type: array
+          items:
+            description: A, B, C и т.д
+            $ref: 'shared://String'
+        isAvailabilityCar:
+          description: Наличие авто
+          $ref: 'shared://Boolean'
+    candidateInfo:
+      description: Информация о кандидате
+      nullable: true
+      $ref: 'shared://Text'
+    professionalAreas:
+      description: Профессиональные области  из каталога professionalAreas
+      nullable: true
+      $ref: 'shared://ArrayOfPositiveInteger'
+    nativeLanguage:
+      description: Родной язык
+      nullable: true
+      $ref: 'shared://String'
+    languages:
+      description: Знание языков (из списка языков с каталога Языков hh)
+      nullable: true
+      type: array
+      items:
+        type: object
+        properties:
+          language:
+            description: Язык (из списка языков с каталога Языков hh)
+            $ref: 'shared://String'
+            nullable: true
+          level:
+            description: Уровень языка
+            $ref: 'shared://String'
+            nullable: true
+    citizenship:
+      description: Гражданство (из списка стран с каталога Стран hh)
+      nullable: true
+      type: array
+      items:
+        $ref: 'shared://String'
+    workPermit:
+      description: Разрешение на работу (из списка стран с каталога Стран hh)
+      nullable: true
+      type: array
+      items:
+        $ref: 'shared://String'
+    travelTime:
+      description: Желательное время пути на работу
+      nullable: true
+      $ref: 'shared://String'
+    url:
+      description: Ссылка на резюме со внешней площадки
+      nullable: true
+      $ref: 'shared://String'
+    photo:
+      description: Фотография соискателя
+      nullable: true
+      $ref: 'shared://Url'
+    city:
+      description: Город соискателя
+      nullable: true
+      $ref: '#/City'
+    gender:
+      description: Пол соискателя
+      nullable: true
+      $ref: 'shared://PositiveInteger'
+    birthday:
+      description: Дата рождения соискателя
+      nullable: true
+      $ref: 'shared://DateTime'
+    firstName:
+      description: Имя соискателя
+      nullable: true
+      $ref: 'shared://String'
+    secondName:
+      description: Отчество соискателя
+      nullable: true
+      $ref: 'shared://String'
+    lastName:
+      description: Имя соискателя
+      nullable: true
+      $ref: 'shared://String'
+    contacts:
+      description: Контактные данные соискателя
+      nullable: true
+      $ref: '#/Contacts'
+
+Contacts:
+  description: Контакты
+  type: array
+  items:
+    $ref: '#/Contact'
+
+Contact:
+  description: Контакт
+  type: object
+  properties:
+    type:
+      nullable: true
+      description: Тип контакта
+      $ref: 'shared://PositiveInteger'
+    val:
+      nullable: true
+      description: Значение контакта
+      $ref: 'shared://String'
+
+City:
+  description: Город соискателя, полученный через расширение
+  type: object
+  properties:
+    value:
+      description: Уникальное значение города
+      nullable: true
+      $ref: 'shared://PositiveInteger'
+    label:
+      description: Название города
+      nullable: true
+      $ref: 'shared://String'
+
+KeySkill:
+  type: object
+  description: Ключевой навык
+  properties:
+    id:
+      $ref: 'shared://PositiveInteger'
+      description: id ключевого навыка в таблице
+    name:
+      $ref: 'shared://String'
+      description: имя ключевого навыка в таблице
+
+KeySkillsFilter:
+  type: object
+  description: Параметры запроса для поиска ключевых навыков
+  properties:
+    name:
+      $ref: 'shared://String'
+      description: Название
+      required: true
+    limit:
+      $ref: 'shared://Limit'
+      description: Лимит
+      required: true
+    offset:
+      $ref: 'shared://Offset'
+      description: Смещение
+      required: true
+    orders:
+      description: Сортировка
+      type: object
+      properties:
+        field:
+          description: Название поля
+          $ref: 'shared://NotEmptyString'
+          example: id
+        predicate:
+          description: Предикат
+          $ref: 'shared://Predicate'
+
+GetResumeDayLimitResponse:
+  description: Данные по дневному лимиту просмотра резюме
+  type: object
+  properties:
+    limits:
+      description: Лимит на просмотр резюме
+      $ref: '#/ResumeViewProperties'
+    spend:
+      description: Количество просмотренных резюме
+      $ref: '#/ResumeViewProperties'
+    left:
+      description: Количество оставшихся просмотров резюме. В этом параметре содержится лимит просмотров на компанию. Из-за этого он может быть меньше, чем доступно текущему пользователю
+      $ref: '#/ResumeViewProperties'
+
+ResumeViewProperties:
+  type: object
+  description: Общий набор значений по просмотренным резюме
+  properties:
+    resumeView:
+      description: Просмотры резюме через сайт
+      $ref: 'shared://PositiveInteger'
+      required: true
+    resumeViewFromApi:
+      description: Просмотры резюме из API. Возвращаются, если они предусмотрены в текущей конфигурации доступа к резюме для работодателя
+      $ref: 'shared://PositiveInteger'
+
+ContentId:
+  description: Id добавленного в хранилище контента со страницы
+  $ref: 'shared://PositiveInteger'
+
+GetJobPageContentResponse:
+  type: object
+  description: Контент со страницы job-площадки
+  properties:
+    id:
+      description: Id контента
+      $ref: 'shared://PositiveInteger'
+    url:
+      description: Ссылка на страницу job-площадки
+      $ref: 'shared://Url'
+    pageContent:
+      description: JSON-контент
+      $ref: 'shared://SimpleObject'
+    resumeId:
+      description: Id резюме
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    platform:
+      description: Тип платформы
+      $ref: '#/VacancyPlaceEnum'
+      nullable: true
+
+InternalFilter:
+  type: object
+  description: Фильтр для поиска во внутренней базе
+  properties:
+    compositeId:
+      $ref: '#/ResumeId'
+      description: Id резюме
+    perPage:
+      $ref: 'shared://PositiveInteger'
+      description: Лимит
+    page:
+      $ref: 'shared://PositiveInteger'
+      description: Страница
+    relocationCitiesIds:
+      $ref: 'shared://ArrayOfPositiveInteger'
+      description: Города релокации
+    profArea:
+      $ref: 'shared://ArrayOfPositiveInteger'
+      description: Профессиональные области
+    version:
+      type: array
+      description: Промежуток по дате обновления резюме
+      items:
+        $ref: 'shared://DateTime'
+        nullable: true
+        description: Дата последнего обновления резюме
+    searchKeyWords:
+      type: array
+      description: Ключевые слова
+      items:
+        type: object
+        properties:
+          searchField:
+            $ref: 'shared://String'
+            description: Место поиска по ключевым словам
+            example: experience
+          searchLogic:
+            $ref: 'shared://String'
+            description: Способ поиска по ключевым словам
+            example: all
+          keyWords:
+            description: Ключевые слова
+            $ref: 'shared://ArrayOfStrings'
+    orderBy:
+      type: object
+      description: Сортировка
+      properties:
+        field:
+          $ref: 'shared://String'
+          description: Поле для сортировки резюме
+          example: version
+        predicate:
+          $ref: 'shared://Predicate'
+          description: Способ сортировки
+          example: 2
+
+GetInternalResumeList:
+  type: object
+  description: Список резюме со внутренней базы
+  properties:
+    list:
+      type: array
+      description: Список резюме
+      items:
+        $ref: '#/ResumeListItem'
+    hasNext:
+      $ref: 'shared://Boolean'
+      description: Пагинация на наличие следующих записей
+  required:
+    - list
+  example:
+    list: [ ]
+    hasNext: false
+
+GetParsedContentResponse:
+  description: Результат парсинга
+  type: object
+  properties:
+    platform:
+      description: Полученная платформа
+      $ref: 'shared://PositiveInteger'
+    parsed:
+      description: Спарсенные с job-площадки данные
+      $ref: 'shared://SimpleObject'
+
+ParsedSchema:
+  description: Схема данных
+  type: array
+  items:
+    description: Значение схемы данных
+    $ref: '#/SchemaItem'
+  example: [
+    {
+      'key': 'fullName',
+      'selector': "h2[data-qa='resume-personal-name']",
+      'type': 1
+    },
+    {
+      'key': 'skills',
+      'selector': "div[class='bloko-tag-list']",
+      'type': 2
+    }
+  ]
+
+SchemaItem:
+  description: Значение схемы данных
+  type: object
+  properties:
+    key:
+      description: Ключ для поля с данными
+      $ref: 'shared://String'
+    selector:
+      description: Селектор для тега с данными
+      $ref: 'shared://Text'
+    type:
+      description: Тип селектора для тега с данными
+      $ref: 'shared://PositiveInteger'
+
+SalaryPublication:
+  description: Зарплата
+  type: object
+  nullable: true
+  properties:
+    from:
+      description: Нижняя граница зарплаты
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    to:
+      description: Верхняя граница зарплаты
+      $ref: 'shared://PositiveInteger'
+      nullable: true
+    gross:
+      description: Признак того, что граница зарплаты указаны до вычета налогов
+      $ref: 'shared://Boolean'
+    currency:
+      description: Код валюты из справочника [currency](https://github.com/hhru/api/blob/master/docs/dictionaries.md)
+      $ref: 'shared://String'
+
+GetVacancyResponse:
+  description: Опубликованная вакансия
+  type: object
+  properties:
+    id:
+      description: Идентификатор вакансии
+      $ref: 'shared://String'
+    description:
+      description: Описание вакансии, содержит html
+      $ref: 'shared://Text'
+    brandedDescription:
+      description: > 
+        [Брендированное описание вакансии](https://github.com/hhru/api/blob/master/docs/vacancies.md#branded_description)
+      $ref: 'shared://Text'
+      nullable: true
+    keySkills:
+      description: Информация о ключевых навыках, заявленных в вакансии. Список может быть пустым.
+      $ref: '#/KeySkillsItems'
+    schedule:
+      description: График работы. Элемент справочника [schedule](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get)
+      $ref: '#/IdNameObject'
+    acceptHandicapped:
+      description: Указание, что вакансия доступна для соискателей с инвалидностью
+      $ref: 'shared://Boolean'
+    acceptKids:
+      description: Указание, что вакансия доступна для соискателей от 14 лет [подробнее](https://github.com/hhru/api/blob/master/docs/employer_vacancies_accept_kids.md#accept-kids)
+      $ref: 'shared://Boolean'
+    experience:
+      description: Требуемый опыт работы. Элемент справочника [experience](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get)
+      $ref: '#/IdNameObject'
+    address:
+      description: >
+        [Адрес вакансии](https://github.com/hhru/api/blob/master/docs/address.md)
+      nullable: true
+      $ref: 'shared://SimpleObject'
+    alternateUrl:
+      description: Ссылка на представление вакансии на сайте
+      $ref: 'shared://Url'
+    applyAlternateUrl:
+      description: Ссылка на отклик на вакансию на сайте
+      $ref: 'shared://Url'
+    code:
+      description: Внутренний код вакансии работадателя
+      nullable: true
+      $ref: 'shared://String'
+    department:
+      description: Департамент, от имени которого размещается вакансия (если данная возможность доступна для компании). Работодатели могут запросить [справочник департаментов](https://api.hh.ru/openapi/redoc#tag/Informaciya-o-rabotodatele/paths/~1employers~1%7Bemployer_id%7D~1departments/get).
+      nullable: true
+      $ref: '#/IdNameObject'
+    employment:
+      description: Тип занятости. Элемент справочника [employment](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get).
+      nullable: true
+      $ref: '#/IdNameObject'
+    salary:
+      description: Оклад
+      $ref: '#/SalaryPublication'
+    archived:
+      description: Находится ли данная вакансия в архиве
+      $ref: 'shared://Boolean'
+    name:
+      description: Название вакансии
+      $ref: 'shared://String'
+    insiderInterview:
+      description: >
+        [Адрес вакансии](https://github.com/hhru/api/blob/master/docs/vacancies.md#insider-interview)
+      nullable: true
+      $ref: 'shared://SimpleObject'
+    area:
+      description: Регион размещения вакансии
+      $ref: '#/IdNameObject'
+    initialCreatedAt:
+      description: Дата и время создания вакансии
+      $ref: 'shared://DateTime'
+    createdAt:
+      description: Дата и время публикации вакансии
+      $ref: 'shared://DateTime'
+    publishedAt:
+      description: Дата и время публикации вакансии
+      $ref: 'shared://DateTime'
+    employer:
+      description: Короткое представление работодателя. Описание полей смотрите в [информации о работодателе](https://api.hh.ru/openapi/redoc#tag/Rabotodatel/paths/~1employers~1%7Bemployer_id%7D/get). Может не прийти в случае, если вакансия анонимная
+      $ref: '#/EmployerInfo'
+    responseLetterRequired:
+      description: Обязательно ли заполнять сообщение при отклике на вакансию
+      $ref: 'shared://Boolean'
+    type:
+      description: Тип вакансии. Элемент справочника [vacancy_type](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get).
+      $ref: '#/IdNameObject'
+    hasTest:
+      description: Информация о наличии прикрепленного тестового задании к вакансии. В случае присутствия теста - true.
+      $ref: 'shared://Boolean'
+    responseUrl:
+      description: На вакансии с типом direct нельзя откликнуться на сайте hh.ru, у этих вакансий в ключе response_url выдаётся URL внешнего сайта (чаще всего это сайт работодателя с формой отклика).
+      $ref: 'shared://String'
+    test:
+      description: Информация о прикрепленном тестовом задании к вакансии. В случае отсутствия теста — null. В данный момент отклик на вакансии с обязательным тестом через API невозможен.
+      $ref: 'shared://SimpleObject'
+    contacts:
+      description: >
+        [Контактная информация](https://github.com/hhru/api/blob/master/docs/vacancies.md#contacts)
+      $ref: 'shared://SimpleObject'
+    billingType:
+      description: Биллинговый тип вакансии. Элемент справочника [vacancy_billing_type](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get).
+      $ref: '#/IdNameObject'
+    allowMessages:
+      description: Включена ли возможность соискателю писать сообщения работодателю, после приглашения/отклика на вакансию
+      $ref: 'shared://Boolean'
+    premium:
+      description: Является ли данная вакансия премиум-вакансией
+      $ref: 'shared://Boolean'
+    driverLicenseTypes:
+      description: Список требуемых категорий водительских прав. Список может быть пустым.
+      $ref: '#/DriverLicenseTypesItems'
+    acceptIncompleteResumes:
+      description: Разрешен ли отклик на вакансию неполным резюме
+      $ref: 'shared://Boolean'
+    workingDays:
+      description: Массив со объектами
+      type: array
+      items:
+        description: Рабочие дни. Элемент справочника [working_days](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get)
+        $ref: '#/IdNameObject'
+    workingTimeIntervals:
+      description: Массив со объектами
+      type: array
+      items:
+        description: Временные интервалы работы. Элемент справочника [working_time_intervals](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get)
+        $ref: '#/IdNameObject'
+    workingTimeModes:
+      description: Массив со объектами
+      type: array
+      items:
+        description: Режимы времени работы. Элемент справочника [working_time_modes](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get)
+        $ref: '#/IdNameObject'
+    acceptTemporary:
+      description: Указание, что вакансия доступна для соискателей с временным трудоустройством
+      $ref: 'shared://Boolean'
+    professionalRoles:
+      description: Массив [объектов профролей](https://github.com/hhru/api/blob/master/docs/vacancies.md#professional-role). Список может быть пустым.
+      type: array
+      items:
+        description: Объект профроли
+        $ref: 'shared://SimpleObject'
+    languages:
+      description: Список языков. Элементы справочника [languages](https://github.com/hhru/api/blob/master/docs/languages.md).
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            description: Идентификатор языка
+            $ref: 'shared://String'
+          name:
+            description: Название языка
+            $ref: 'shared://String'
+          level:
+            description: Уровень знания языка. Элемент справочника [language_level](https://api.hh.ru/openapi/redoc#tag/Obshie-spravochniki/paths/~1dictionaries/get).
+            $ref: '#/IdNameObject'
+
+SchemaId:
+  description: Id схемы данных
+  $ref: 'shared://PositiveInteger'
+
+GetSchema:
+  description: Схема данных
+  type: object
+  properties:
+    id:
+      description: Id схемы
+      $ref: 'shared://PositiveInteger'
+    title:
+      description: Заголовок схемы
+      $ref: 'shared://String'
+    platform:
+      description: Платформа
+      $ref: 'shared://PositiveInteger'
+    schema:
+      description: Схема данных для парсинга HTML-документа
+      type: array
+      items:
+        description: Значение схемы данных
+        $ref: '#/SchemaItem'
+
+GetSchemaList:
+  description: Список схем данных
+  type: array
+  items:
+    description: Схема данных
+    $ref: '#/SchemaIdTitle'
+
+SchemaIdTitle:
+  description: Схема данных
+  type: object
+  properties:
+    id:
+      description: Id схемы
+      $ref: 'shared://PositiveInteger'
+    title:
+      description: Заголовок схемы
+      $ref: 'shared://String'
+    platform:
+      description: Платформа
+      $ref: 'shared://PositiveInteger'
+
+GetSkills:
+  description: Список ключевых навыков
+  type: array
+  items:
+    description: Информация по каждому ключевому навыку
+    $ref: '#/IdNameObject'
+
+Platform:
+  description: Платформа
+  $ref: 'shared://PositiveInteger'
+  nullable: true

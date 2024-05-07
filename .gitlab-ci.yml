@@ -1,0 +1,4 @@
+include:
+  - project: 'ecosystem/documentation'
+    ref: master
+    file: '/gitlab-ci/node.yml'

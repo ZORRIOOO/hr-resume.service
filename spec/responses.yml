@@ -1,0 +1,252 @@
+GetResumeList:
+  description: Список резюме
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetResumeListResponse'
+
+Empty:
+  description: Нет ответа
+
+GetAuthParamsHH:
+  description: Ссылка для авторизации в HH
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHAuthData'
+
+GetResume:
+  description: Резюме
+  content:
+    application/json:
+      schema:
+        anyOf:
+          - $ref: './schemas.yml#/HHResume'
+          - $ref: './schemas.yml#/Resume'
+
+GetHHDictionaries:
+  description: Справочники HH
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHDictionaries'
+
+GetHHAreas:
+  description: Справочник регионов HH
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHAreas'
+
+GetHHLanguages:
+  description: Справочник языков
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHLanguages'
+
+GetHHProfessionalRoles:
+  description: Справочник профессиональных ролей
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHProfessionalRoles'
+
+GetHHSuggestions:
+  description: Подсказки по областям
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHSuggestions'
+
+GetResumeListByCandidateId:
+  description: Список резюме кандидата (Разные прощадки)
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetResumeListByCandidateIdResponse'
+
+GetHHEmployersAddresses:
+  description: Адреса работодателя
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHEmployersAddresses'
+
+GetHHManagers:
+  description: Менеджеры работодателя
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHManagers'
+
+GetHHPublicationTypes:
+  description: Типы публикации вакансии
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/HHPublicationTypes'
+
+GetResumeComments:
+  description: Комментарии к резюме соискателя
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/ResumeComments'
+
+PostVacancy:
+  description: Ответ при успешном выполнении запроса
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/PostVacancyResponse'
+
+ArchiveVacancy:
+  description: Ответ при успешной архивации вакансии
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/ArchiveVacancyResponse'
+
+GetResponseList:
+  description: Ответ при успешном получении списка откликов
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetResponseListResponse'
+
+GetResponse:
+  description: Ответ при успешном получении отклика из коллекции
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetResponse'
+
+GetTemplates:
+  description: Ответ при успешном получении текстов по шаблонам для действий по откликам/приглашениям
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetTemplatesResponse'
+
+GetBrandedTemplates:
+  description: Ответ при успешном получении брендированных шаблонов вакансии
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetBrandedTemplatesResponse'
+
+GetCurrentUser:
+  description: Ответ при успешном получении данных о текущем пользователе
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetCurrentUserResponse'
+
+GetCollection:
+  description: Ответ при успешном получении коллекции из откликов/приглашений
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetCollectionResponse'
+
+ResumeId:
+  description: Ответ при успешном добавлении/обновлении резюме
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/ResumeId'
+
+CheckDoubleByUrl:
+  description: Ответ при успешной проверки на дубли контента и резюме
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/CheckDoubleByUrlResponse'
+
+KeySkill:
+  description: Добавленный ключевой навык
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/KeySkill'
+
+KeySkills:
+  description: Ключевые навыки
+  content:
+    application/json:
+      schema:
+        description: Массив ключевых навыков
+        type: array
+        items:
+          $ref: './schemas.yml#/KeySkill'
+
+GetResumeDayLimit:
+  description: Ответ при успешном просмотре своего дневного лимита по открытию резюме
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetResumeDayLimitResponse'
+
+AddJobPageContent:
+  description: Ответ при успешном добавлении контента со страницы job-платформы
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/ContentId'
+
+GetJobPageContent:
+  description: Ответ при успешном просмотре контента со страницы job-платформы
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetJobPageContentResponse'
+
+SchemaId:
+  description: Ответ при успешном добавлении/обновлении схемы данных
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/SchemaId'
+
+GetSchemaResponse:
+  description: Ответ при успешном получении схемы данных
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetSchema'
+
+GetSchemaListResponse:
+  description: Ответ при успешном получении списка схем данных
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetSchemaList'
+
+GetInternalResumeList:
+  description: Ответ при поиске резюме во внутренней базе
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetInternalResumeList'
+
+GetVacancy:
+  description: Ответ при успешном просмотре вакансии
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetVacancyResponse'
+
+GetSkillsByIds:
+  description: Ответ при успешном получении ключевых навыков
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/GetSkills'
+
+GetPlatformByUrl:
+  description: Ответ при успешном получении платформы
+  content:
+    application/json:
+      schema:
+        $ref: './schemas.yml#/Platform'
