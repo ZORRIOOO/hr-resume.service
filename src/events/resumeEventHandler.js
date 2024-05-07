@@ -1,4 +1,4 @@
-const Service = require('@ecosystem/esoft-service');
+const Service = require('@ecosystem/service');
 
 class ResumeEventHandler {
   resumeDao;

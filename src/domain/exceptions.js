@@ -1,4 +1,4 @@
-const {Exceptions: {RuntimeError}} = require('@ecosystem/esoft-service');
+const {Exceptions: {RuntimeError}} = require('@ecosystem/service');
 
 module.exports = {
   RuntimeError

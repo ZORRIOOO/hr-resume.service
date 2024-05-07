@@ -3,7 +3,7 @@ const {
 } = require('../../config');
 const {ApiClient} = require('../../src/components/hhApi/apiClient');
 const {AxiosResponseInterceptor} = require('../../src/components/hhApi/errors/axiosResponseInterceptor');
-const Service = require('@ecosystem/esoft-service');
+const Service = require('@ecosystem/service');
 
 const createApiClient = (headers) => {
   const tokenStore = {

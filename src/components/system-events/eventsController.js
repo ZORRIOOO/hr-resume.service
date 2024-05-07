@@ -1,5 +1,5 @@
 const {AppContext} = require('../../app/common/appContext');
-const Service = require('@ecosystem/esoft-service');
+const Service = require('@ecosystem/service');
 
 class EventsController {
   logger;

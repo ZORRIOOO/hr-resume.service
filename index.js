@@ -1,6 +1,6 @@
 const path = require('path');
 const {EventsController} = require('./src/components/system-events/eventsController');
-const Service = require('@ecosystem/esoft-service');
+const Service = require('@ecosystem/service');
 const {
   development,
   production

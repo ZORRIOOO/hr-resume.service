@@ -23,7 +23,7 @@ tags:
   - name: Schema
     description: Схема данных
 servers:
-  - url: https://resume-business.esoft.team/
+  - url: https://hr-resume-business/
     description: Address for requests from host to kuber
   - url: http://resume-business:{port}/
     description: Dev internal k8s address

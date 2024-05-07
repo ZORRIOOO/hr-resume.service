@@ -16,7 +16,7 @@ class GetInternalBaseResumeListQueryHandler {
     } = query;
 
     const result = await this.resumeDao.getResumeByKeyWords(filter);
-    const {list, hasNext} = this.mapEsoftTechResponse(result);
+    const {list, hasNext} = this.mapTechResponse(result);
 
     return this.response(list, hasNext);
   }
@@ -28,7 +28,7 @@ class GetInternalBaseResumeListQueryHandler {
     };
   }
 
-  mapEsoftTechResponse = ({resumes, hasNext}) => {
+  mapTechResponse = ({resumes, hasNext}) => {
     const mapper = new ResumeMapper();
 
     const localResumeMap = resumes.reduce((map, item) =>

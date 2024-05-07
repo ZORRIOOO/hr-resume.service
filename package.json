@@ -12,13 +12,12 @@
     "yaml-lint": "yaml-lint ./"
   },
   "keywords": [],
-  "author": "kmayer",
   "license": "ISC",
   "dependencies": {
     "@ecosystem/enums": "^1.0.941",
     "@ecosystem/errors": "^1.1.19",
-    "@ecosystem/esoft-service": "^3.14.1",
-    "@ecosystem/esoft-tools": "^1.1.34",
+    "@ecosystem/service": "^3.14.1",
+    "@ecosystem/tools": "^1.1.34",
     "axios": "0.24.0",
     "dayjs": "1.10.7",
     "form-data": "4.0.0",
@@ -30,7 +29,7 @@
   "devDependencies": {
     "@babel/eslint-parser": "7.15.8",
     "@ecosystem/eslint-config": "^1.0.22",
-    "@ecosystem/eslint-plugin-esoft-rules": "^1.1.4",
+    "@ecosystem/eslint-plugin-rules": "^1.1.4",
     "@ecosystem/yamllint": "^1.0.12",
     "chai": "4.3.7",
     "chai-as-promised": "7.1.1",
